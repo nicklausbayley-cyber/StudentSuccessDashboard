@@ -19,7 +19,7 @@ export default function Students() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiFetch("/api/students");
+        const data = await apiFetch("/api/students/");
         setRows(Array.isArray(data) ? data : []);
       } catch (e: any) {
         setErr(e?.message || "Failed to load students");

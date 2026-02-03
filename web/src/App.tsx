@@ -11,10 +11,12 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/students" element={<Protected><Students /></Protected>} />
-      <Route path="*" element={<Navigate to="/students" replace />} />
-    </Routes>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+      <div className="rounded-2xl bg-white p-8 shadow-sm">
+        <h1 className="text-3xl font-semibold">Tailwind is working ✅</h1>
+        <p className="mt-2 text-slate-600">Next: Student Dashboard UI</p>
+      </div>
+    </div>
   );
 }
+
