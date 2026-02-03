@@ -2,14 +2,14 @@ import csv, io
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
-from app.db.deps import get_db
-from app.models.school import School
-from app.models.student import Student
-from app.models.attendance import AttendanceRecord
-from app.models.academic import AcademicRecord
-from app.models.readiness import StudentReadiness
-from app.services.readiness_rules import compute_readiness
+from deps import get_current_user
+from deps import get_db
+from school import School
+from student import Student
+from attendance import AttendanceRecord
+from academic import AcademicRecord
+from readiness import StudentReadiness
+from readiness_rules import compute_readiness
 
 router = APIRouter()
 
