@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.deps import get_db
-from app.models.district import District
-from app.models.school import School
-from app.models.user import User
-from app.core.security import hash_password
+from deps import get_db
+from district import District
+from school import School
+from user import User
+from security import hash_password
 
 router = APIRouter()
 

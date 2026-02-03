@@ -1,6 +1,6 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.base import Base
+from base import Base
 
 class District(Base):
     __tablename__ = "districts"

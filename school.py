@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.base import Base
+from base import Base
 
 class School(Base):
     __tablename__ = "schools"

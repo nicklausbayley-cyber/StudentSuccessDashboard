@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.base import Base
+from base import Base
 
 class AttendanceRecord(Base):
     __tablename__ = "attendance_records"
