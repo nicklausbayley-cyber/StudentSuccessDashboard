@@ -21,7 +21,7 @@ def _require_admin(current_user):
     if current_user.role not in ("district_admin", "school_admin"):
         raise HTTPException(status_code=403, detail="Insufficient role")
 
-@router.get("/")
+@router.get("")
 def list_students(
     status: str | None = None,
     school_id: int | None = None,
