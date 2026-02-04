@@ -1,0 +1,701 @@
+import React, { useMemo, useState } from "react";
+import {
+  Building2,
+  Search,
+  User2,
+  ChevronDown,
+SlidersHorizontal,
+  MoreHorizontal,
+  AlertTriangle,
+  ShieldAlert,
+  ShieldCheck,
+  Shield,
+} from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  Tooltip,
+} from "recharts";
+
+function cx(...c: Array<string | false | undefined | null>) {
+  return c.filter(Boolean).join(" ");
+}
+
+function Chip({
+  active,
+  children,
+  onClick,
+  tone = "slate",
+}: {
+  active?: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+  tone?: "rose" | "amber" | "emerald" | "slate";
+}) {
+  const tones: Record<string, string> = {
+    rose: "bg-rose-50 text-rose-700 ring-rose-200",
+    amber: "bg-amber-50 text-amber-800 ring-amber-200",
+    emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    slate: "bg-slate-50 text-slate-700 ring-slate-200",
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 transition",
+        tones[tone],
+        active ? "shadow-sm" : "opacity-80 hover:opacity-100"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Card({
+  title,
+  right,
+  children,
+  className,
+}: {
+  title?: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cx(
+        "rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur",
+        className
+      )}
+    >
+      {(title || right) && (
+        <div className="flex items-center justify-between gap-3 px-5 pt-5">
+          {title ? (
+            <div className="text-lg font-semibold text-slate-900">{title}</div>
+          ) : (
+            <div />
+          )}
+          {right}
+        </div>
+      )}
+      <div className={cx(title || right ? "p-5 pt-4" : "p-5")}>{children}</div>
+    </div>
+  );
+}
+
+type KPIProps = { label: string; value: string; delta?: string; sub?: string };
+
+function KPI({ label, value, delta, sub }: KPIProps) {
+  return (
+    <div className="h-full rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-sm font-medium text-slate-600">{label}</div>
+
+          {delta ? (
+            <div className="inline-flex items-center rounded-xl bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200/70">
+              {delta}
+            </div>
+          ) : (
+            <div className="h-7 w-16" />
+          )}
+        </div>
+
+        <div className="mt-2 text-5xl font-semibold tracking-tight text-slate-900">
+          {value}
+        </div>
+
+        {sub ? (
+          <div className="mt-3 text-sm text-slate-500">{sub}</div>
+        ) : (
+          <div className="mt-3 h-5" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+type Risk = "High Risk" | "At Risk" | "On Watch" | "Low Risk";
+
+const RISK_META: Record<Risk, { tone: "rose" | "amber" | "emerald" | "slate"; icon: React.ReactNode }> = {
+  "High Risk": { tone: "rose", icon: <ShieldAlert className="h-4 w-4" /> },
+  "At Risk": { tone: "amber", icon: <AlertTriangle className="h-4 w-4" /> },
+  "On Watch": { tone: "slate", icon: <Shield className="h-4 w-4" /> },
+  "Low Risk": { tone: "emerald", icon: <ShieldCheck className="h-4 w-4" /> },
+};
+
+type StudentRow = {
+  name: string;
+  grade: number;
+  homeroom: string;
+  newaMath: number;
+  attendance: number; // percent
+  wida: number;
+  risk: Risk;
+};
+
+const DEMO_STUDENTS: StudentRow[] = [
+  { name: "Jordan Lee", grade: 7, homeroom: "B", newaMath: 215, attendance: 71, wida: 412, risk: "On Watch" },
+  { name: "Avery Patel", grade: 7, homeroom: "A", newaMath: 246, attendance: 59, wida: 575, risk: "At Risk" },
+  { name: "Mason Rodriguez", grade: 8, homeroom: "A", newaMath: 208, attendance: 69, wida: 555, risk: "At Risk" },
+  { name: "Olivia Nguyen", grade: 8, homeroom: "A", newaMath: 211, attendance: 89, wida: 553, risk: "High Risk" },
+  { name: "Xavier Brown", grade: 11, homeroom: "A", newaMath: 253, attendance: 89, wida: 537, risk: "Low Risk" },
+  { name: "Emma Davis", grade: 11, homeroom: "A", newaMath: 263, attendance: 59, wida: 532, risk: "At Risk" },
+  { name: "Lucas Chen", grade: 7, homeroom: "A", newaMath: 255, attendance: 59, wida: 531, risk: "At Risk" },
+  { name: "Sophia Wilson", grade: 8, homeroom: "A", newaMath: 233, attendance: 89, wida: 532, risk: "High Risk" },
+  { name: "Caleb Martinez", grade: 10, homeroom: "A", newaMath: 288, attendance: 69, wida: 528, risk: "At Risk" },
+  { name: "Mia Hernandez", grade: 9, homeroom: "A", newaMath: 239, attendance: 89, wida: 527, risk: "Low Risk" },
+];
+
+function TrendBadge({ pct }: { pct: number }) {
+  const up = pct >= 0;
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center rounded-lg px-2 py-1 text-xs ring-1",
+        up
+          ? "bg-emerald-50 text-emerald-700 ring-emerald-200/70"
+          : "bg-rose-50 text-rose-700 ring-rose-200/70"
+      )}
+    >
+      {up ? "↗" : "↘"} {Math.abs(pct)}%
+    </span>
+  );
+}
+
+export default function CounselorDashboard() {
+  const [q, setQ] = useState("");
+  const [riskFilter, setRiskFilter] = useState<Risk | "All">("All");
+  const [selected, setSelected] = useState<string>("Jordan Lee");
+  const [gradeFilter, setGradeFilter] = useState<number | "All">("All");
+
+  
+  const [homeFilter, setHomeFilter] = useState<string | "All">("All");
+const gradeOptions = useMemo(() => {
+    const g = Array.from(new Set(DEMO_STUDENTS.map((s) => s.grade))).sort((a, b) => a - b);
+    return g;
+  }, []);
+
+  const homeOptions = useMemo(() => {
+    const h = Array.from(new Set(DEMO_STUDENTS.map((s) => s.homeroom))).sort();
+    return h;
+  }, []);
+
+  const rows = useMemo(() => {
+    return DEMO_STUDENTS.filter((s) => {
+      const matchQ =
+        !q ||
+        s.name.toLowerCase().includes(q.toLowerCase()) ||
+        String(s.grade).includes(q) ||
+        s.homeroom.toLowerCase().includes(q.toLowerCase());
+
+      const matchRisk = riskFilter === "All" ? true : s.risk === riskFilter;
+      const matchGrade = gradeFilter === "All" ? true : s.grade === gradeFilter;
+      const matchHome = homeFilter === "All" ? true : s.homeroom === homeFilter;
+
+      return matchQ && matchRisk && matchGrade && matchHome;
+    });
+  }, [q, riskFilter, gradeFilter, homeFilter]);
+
+  const selectedRow = useMemo(
+    () => DEMO_STUDENTS.find((s) => s.name === selected) ?? DEMO_STUDENTS[0],
+    [selected]
+  );
+
+  const riskCounts = useMemo(() => {
+    const base: Record<Risk, number> = { "High Risk": 0, "At Risk": 0, "On Watch": 0, "Low Risk": 0 };
+    for (const s of DEMO_STUDENTS) base[s.risk] += 1;
+    const total = DEMO_STUDENTS.length || 1;
+    return (Object.keys(base) as Risk[]).map((k) => ({
+      name: k,
+      value: base[k],
+      pct: Math.round((base[k] / total) * 100),
+    }));
+  }, []);
+
+  const spark = [
+    { x: "W1", y: 380 },
+    { x: "W2", y: 395 },
+    { x: "W3", y: 402 },
+    { x: "W4", y: 410 },
+    { x: "W5", y: 412 },
+  ];
+
+  const pieCells = {
+    "High Risk": "rgba(244,63,94,0.75)",
+    "At Risk": "rgba(245,158,11,0.75)",
+    "On Watch": "rgba(100,116,139,0.70)",
+    "Low Risk": "rgba(34,197,94,0.70)",
+  } as const;
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
+      <div className="mx-auto max-w-7xl px-6 py-6">
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <Building2 className="h-5 w-5 text-slate-700" />
+            </div>
+            <div>
+              <div className="text-xl font-semibold text-slate-900">
+                Student Achievement Dashboard
+              </div>
+            </div>
+
+{/* Student list controls */}
+<div className="mt-6 rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
+  <div className="p-5">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Search */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-sm ring-1 ring-slate-200/70 sm:w-[360px]">
+          <Search className="h-4 w-4 text-slate-500" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+            placeholder="Search student name, grade, or homeroom..."
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+            <select
+              value={gradeFilter}
+              onChange={(e) =>
+                setGradeFilter(e.target.value === "All" ? "All" : Number(e.target.value))
+              }
+              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+            >
+              <option value="All">All Grades</option>
+              {gradeOptions.map((g) => (
+                <option key={g} value={g}>{`Grade ${g}`}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          </div>
+
+                    <div className="relative">
+            <select
+              value={homeFilter}
+              onChange={(e) => setHomeFilter(e.target.value as any)}
+              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+            >
+              <option value="All">All Homerooms</option>
+              {homeOptions.map((h) => (
+                <option key={h} value={h}>{`Homeroom ${h}`}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Risk pills */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-rose-50 px-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-200/70 hover:bg-rose-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+          High Risk
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-amber-50 px-3 text-sm font-semibold text-amber-700 ring-1 ring-amber-200/70 hover:bg-amber-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+          At Risk
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200/70 hover:bg-emerald-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          On Watch
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-50 px-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200/70 hover:bg-slate-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+          Low Risk
+        </button>
+        <button className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50">
+          <span className="text-lg leading-none">⋯</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+          </div>
+
+          <div className="flex items-center gap-3">
+
+            <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <User2 className="h-5 w-5 text-slate-700" />
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter bar */}
+        
+{/* Filters */}
+<div className="mt-6 flex flex-col gap-3">
+  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Dropdown pills */}
+      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        Grade
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        Homerooms
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        Test Window
+        <span className="text-slate-500">Winter 2026</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+        </svg>
+      </button>
+    </div>
+
+    {/* Export */}
+    <div className="flex items-center gap-2">
+      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-slate-600">
+          <path d="M12 3v10m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        Export
+      </button>
+    </div>
+  </div>
+
+  {/* subtle divider like the mock */}
+  <div className="h-px w-full bg-slate-200/70" />
+</div>
+{/* KPI row */}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <KPI label="Attendance" value="91.4%" delta="↑ 1.2%" sub="You’ve missed 12 days this year." />
+          <KPI label="iLearn Test Average" value="417" delta="↑ 4   +4" sub="↑ 15% from last period" />
+          <KPI label="At Risk" value="28" sub="students   ↑ +6% more at period" />
+          <KPI label="WIDA Average" value="4.6" delta="↑ 0.2   +0.2" sub="↑ 4.6→4.12 9   60.52" />
+        </div>
+
+        {/* Main grid: table + right column */}
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left: table card */}
+          <Card
+            className="lg:col-span-2"
+            title=""
+            right={
+              <button className="rounded-xl bg-white px-3 py-2 text-sm text-slate-600 ring-1 ring-slate-200/70 shadow-sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            }
+          >
+            {/* Controls row */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-2 ring-1 ring-slate-200/70">
+                <Search className="h-4 w-4 text-slate-500" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                  placeholder="Filter students..."
+                />
+              </div>
+
+              <button className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/70">
+                All Levels <ChevronDown className="h-4 w-4 text-slate-500" />
+              </button>
+              <button className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/70">
+                All Subjects <ChevronDown className="h-4 w-4 text-slate-500" />
+              </button>
+              <button className="rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/70">
+                <SlidersHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Risk chips */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Chip active={riskFilter === "All"} onClick={() => setRiskFilter("All")} tone="slate">
+                All
+              </Chip>
+              <Chip active={riskFilter === "High Risk"} onClick={() => setRiskFilter("High Risk")} tone="rose">
+                High Risk
+              </Chip>
+              <Chip active={riskFilter === "At Risk"} onClick={() => setRiskFilter("At Risk")} tone="amber">
+                At Risk
+              </Chip>
+              <Chip active={riskFilter === "On Watch"} onClick={() => setRiskFilter("On Watch")} tone="slate">
+                On Watch
+              </Chip>
+              <Chip active={riskFilter === "Low Risk"} onClick={() => setRiskFilter("Low Risk")} tone="emerald">
+                Low Risk
+              </Chip>
+            </div>
+
+            {/* Table */}
+            <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-slate-200/70">
+              <div className="grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
+                <div>Student</div>
+                <div>Grade</div>
+                <div>Homeroom</div>
+                <div>NEWA Math</div>
+                <div>Attendance</div>
+                <div>WIDA</div>
+              </div>
+
+              <div className="divide-y divide-slate-200/70 bg-white">
+                {rows.map((s) => (
+                  <button
+                    key={s.name}
+                    onClick={() => setSelected(s.name)}
+                    className={cx(
+                      "grid w-full grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] items-center px-4 py-3 text-left text-sm",
+                      selected === s.name ? "bg-slate-50" : "hover:bg-slate-50/70"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-slate-100 ring-1 ring-slate-200/70" />
+                      <div className="font-medium text-slate-900">{s.name}</div>
+                      <div className="hidden md:inline-flex">
+                        <span className={cx("ml-2 inline-flex items-center gap-2 rounded-xl px-2 py-1 text-xs ring-1",
+                          RISK_META[s.risk].tone === "rose"
+                            ? "bg-rose-50 text-rose-700 ring-rose-200/70"
+                            : RISK_META[s.risk].tone === "amber"
+                            ? "bg-amber-50 text-amber-800 ring-amber-200/70"
+                            : RISK_META[s.risk].tone === "emerald"
+                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200/70"
+                            : "bg-slate-50 text-slate-700 ring-slate-200/70"
+                        )}>
+                          {RISK_META[s.risk].icon} {s.risk}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-slate-700">{s.grade}</div>
+                    <div className="text-slate-700">{s.homeroom}</div>
+                    <div className="text-slate-900">{s.newaMath}</div>
+                    <div className="flex items-center justify-between gap-2 text-slate-700">
+                      <span>{s.attendance}%</span>
+                      <TrendBadge pct={s.attendance >= 80 ? 7 : -7} />
+                    </div>
+                    <div className="text-slate-700">{s.wida}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Right column */}
+          <div className="space-y-6">
+            <Card title="Risk Distribution">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1">
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={riskCounts}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={2}
+                      >
+                        {riskCounts.map((d) => (
+                          <Cell key={d.name} fill={pieCells[d.name as Risk]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="space-y-2">
+                  {riskCounts.map((d) => (
+                    <div key={d.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: pieCells[d.name as Risk] }} />
+                        {d.name}
+                      </div>
+                      <div className="text-slate-600">{d.pct}%</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Actionable Alerts">
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-slate-900">{selectedRow.name}</div>
+                    <div className="mt-0.5 text-sm text-slate-500">
+                      {selectedRow.grade}th • Homeroom {selectedRow.homeroom}
+                    </div>
+                  </div>
+
+                  <Chip tone={RISK_META[selectedRow.risk].tone}>
+                    {RISK_META[selectedRow.risk].icon} {selectedRow.risk}
+                  </Chip>
+                </div>
+
+                <div className="mt-4 text-sm font-medium text-slate-800">
+                  NEWA Reading Declined
+                </div>
+
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div>
+                    <div className="text-3xl font-semibold text-slate-900">412</div>
+                    <div className="mt-1 text-sm text-emerald-700">↑ 5%</div>
+                  </div>
+
+                  <div className="h-20 flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={spark}>
+                        <XAxis dataKey="x" hide />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="y" strokeWidth={3} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                  <span className="rounded-lg bg-slate-50 px-2 py-1 ring-1 ring-slate-200/70">
+                    Percentile: 66%
+                  </span>
+                  <span className="rounded-lg bg-slate-50 px-2 py-1 ring-1 ring-slate-200/70">
+                    55% percentile
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
+                    <div className="text-xs text-slate-600">WIDA</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900">4.2</div>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
+                    <div className="text-xs text-slate-600">Risk Level</div>
+                    <div className="mt-1 text-sm font-medium text-slate-800">
+                      {selectedRow.risk}
+                    </div>
+                  </div>
+                </div>
+
+                <button className="mt-4 flex w-full items-center justify-between rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/70">
+                  View details <span className="text-slate-400">›</span>
+                </button>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Student detail section */}
+        <div className="mt-6 rounded-2xl bg-white/70 ring-1 ring-black/5">
+          <div className="px-6 pt-6 text-lg font-semibold text-slate-900">Student Detail</div>
+          <div className="mt-3 flex flex-wrap gap-4 border-b border-slate-200/70 px-6 pb-3 text-sm text-slate-600">
+            <button className="border-b-2 border-slate-900 pb-2 text-slate-900">Overview</button>
+            <button className="pb-2 hover:text-slate-900">Attendance</button>
+            <button className="pb-2 hover:text-slate-900">Tests</button>
+            <button className="pb-2 hover:text-slate-900">Plans & Notes</button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-slate-100 ring-1 ring-slate-200/70" />
+                  <div>
+                    <div className="font-semibold text-slate-900">{selectedRow.name}</div>
+                    <div className="text-sm text-slate-500">
+                      Grade {selectedRow.grade} • Homeroom {selectedRow.homeroom}
+                    </div>
+                  </div>
+                </div>
+                <Chip tone="slate">{selectedRow.risk}</Chip>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
+                  <div className="text-xs text-slate-600">Attendance</div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900">
+                    {selectedRow.attendance}%
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">12 missed days</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
+                  <div className="text-xs text-slate-600">Reading</div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900">208</div>
+                  <div className="mt-1 text-xs text-slate-500">55th percentile</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
+                  <div className="text-xs text-slate-600">Math</div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900">
+                    {selectedRow.newaMath}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">72nd percentile</div>
+                </div>
+              </div>
+
+              <div className="mt-5 h-28 rounded-2xl bg-slate-50 ring-1 ring-slate-200/70 p-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={spark}>
+                    <XAxis dataKey="x" hide />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="y" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            <Card title="Suggested Steps">
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                  <span className="mt-0.5">☑️</span>
+                  <div>Meet with {selectedRow.name.split(" ")[0]} to discuss: the data</div>
+                </div>
+                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                  <span className="mt-0.5">☑️</span>
+                  <div>Recommend daily reading practice</div>
+                </div>
+                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                  <span className="mt-0.5">☑️</span>
+                  <div>Provide reading support resources</div>
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold text-slate-900">Alerts</div>
+                    <div className="flex items-center gap-2">
+                      <Chip tone="rose">High Risk</Chip>
+                      <Chip tone="slate">On Watch</Chip>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-slate-700">
+                    • NEWA Reading Declined
+                  </div>
+                  <div className="mt-1 text-slate-500 text-xs">
+                    Review trend and consider intervention plan.
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

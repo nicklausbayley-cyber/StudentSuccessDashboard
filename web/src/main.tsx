@@ -8,6 +8,7 @@ import { AuthProvider } from "./lib/AuthContext";
 import Login from "./pages/Login";
 import Students from "./pages/Students";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import CounselorDashboard from "./pages/counselor/CounselorDashboard";
 
 function AppRouter() {
   return (
@@ -19,6 +20,9 @@ function AppRouter() {
 
         {/* Student role UI */}
         <Route path="/student" element={<StudentDashboard />} />
+
+        {/* Counselor role UI */}
+        <Route path="/counselor" element={<CounselorDashboard />} />
 
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="*" element={<Navigate to="/student" replace />} />
