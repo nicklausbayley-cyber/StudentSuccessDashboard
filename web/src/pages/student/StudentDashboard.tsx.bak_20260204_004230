@@ -1,0 +1,483 @@
+import {
+  Home,
+  Search,
+  User2,
+  ChevronDown,
+  Check,
+  TrendingUp,
+  AlertTriangle,
+  GraduationCap,
+  Star,
+  ChevronRight,
+  CheckSquare,
+  Pencil,
+  Target,
+} from "lucide-react";
+
+function classNames(...c: Array<string | false | undefined | null>) {
+  return c.filter(Boolean).join(" ");
+}
+
+function Card({
+  title,
+  subtitle,
+  icon,
+  right,
+  children,
+  className,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={classNames(
+        "rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur",
+        className
+      )}
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              {icon ? <div className="text-slate-500">{icon}</div> : null}
+              <div className="text-xl font-semibold text-slate-900">{title}</div>
+            </div>
+            {subtitle ? (
+              <div className="mt-1 text-sm text-slate-500">{subtitle}</div>
+            ) : null}
+          </div>
+          {right}
+        </div>
+        <div className="mt-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function ProgressPill({ value }: { value: number }) {
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div className="rounded-2xl bg-emerald-50/70 ring-1 ring-emerald-200/70 px-5 py-4">
+      <div className="flex items-center gap-3">
+        <div className="text-sm font-medium text-slate-700">
+          Overall Progress: <span className="font-semibold">{v}%</span>
+        </div>
+        <div className="h-2 flex-1 rounded-full bg-slate-200">
+          <div
+            className="h-2 rounded-full bg-emerald-500"
+            style={{ width: `${v}%` }}
+          />
+        </div>
+        <div className="h-2 w-20 rounded-full bg-amber-200" />
+      </div>
+    </div>
+  );
+}
+
+function Donut({
+  percent,
+  label,
+}: {
+  percent: number;
+  label: string;
+}) {
+  const p = Math.max(0, Math.min(100, percent));
+  const r = 54;
+  const c = 2 * Math.PI * r;
+  const dash = (p / 100) * c;
+  return (
+    <div className="relative grid place-items-center">
+      <svg width="140" height="140" viewBox="0 0 140 140" className="block">
+        <circle
+          cx="70"
+          cy="70"
+          r={r}
+          stroke="rgb(226 232 240)"
+          strokeWidth="14"
+          fill="none"
+        />
+        <circle
+          cx="70"
+          cy="70"
+          r={r}
+          stroke="rgb(34 197 94)"
+          strokeWidth="14"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${c - dash}`}
+          transform="rotate(-90 70 70)"
+        />
+      </svg>
+      <div className="absolute text-center">
+        <div className="text-3xl font-semibold text-slate-900">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function MiniSparkline() {
+  // simple inline sparkline to mimic mock
+  return (
+    <div className="mt-3 rounded-xl bg-slate-50 ring-1 ring-slate-200/70 p-3">
+      <svg viewBox="0 0 260 70" className="h-14 w-full">
+        <path
+          d="M10 52 C40 48, 55 36, 80 40 C105 44, 120 28, 145 30 C170 32, 190 20, 215 24 C235 27, 245 18, 250 14"
+          fill="none"
+          stroke="rgb(59 130 246)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M10 52 C40 48, 55 36, 80 40 C105 44, 120 28, 145 30 C170 32, 190 20, 215 24 C235 27, 245 18, 250 14 L250 70 L10 70 Z"
+          fill="rgba(59,130,246,0.10)"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function TinyGoalBar({ value }: { value: number }) {
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between text-sm text-slate-600">
+        <div className="rounded-lg bg-emerald-50 px-3 py-1 ring-1 ring-emerald-200/70">
+          Goal: <span className="font-medium">Stay above 95%</span>
+        </div>
+      </div>
+      <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
+        <div
+          className="h-2 rounded-full bg-slate-500"
+          style={{ width: `${v}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function StudentDashboard() {
+  const studentName = "Jordan!";
+  const overallProgress = 78;
+
+  // mock-ish values
+  const attendancePct = 94.2;
+  const missedDays = 12;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100">
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <Home className="h-5 w-5 text-slate-700" />
+            </div>
+            <div className="text-xl font-semibold text-slate-800">
+              Student Dashboard
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 rounded-2xl bg-white px-4 py-2 shadow-sm ring-1 ring-black/5">
+              <Search className="h-4 w-4 text-slate-500" />
+              <input
+                className="w-64 bg-transparent text-sm outline-none placeholder:text-slate-400"
+                placeholder="Search student..."
+              />
+            </div>
+
+            <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <User2 className="h-5 w-5 text-slate-700" />
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Greeting + progress pill */}
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <div className="text-5xl font-semibold tracking-tight text-slate-900">
+              Hi {studentName} 👋
+            </div>
+            <div className="mt-2 text-2xl text-slate-700">You’re currently:</div>
+
+            {/* On track card (green header like mock) */}
+            <div className="mt-5 overflow-hidden rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5">
+              <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 px-6 py-5 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <div className="text-3xl font-semibold">On Track Overall</div>
+                </div>
+              </div>
+              <div className="px-6 py-4 text-lg text-slate-700">
+                <span className="font-medium">Grade 7</span> •{" "}
+                <span className="font-medium">Homeroom B</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:pt-12">
+            <ProgressPill value={overallProgress} />
+          </div>
+        </div>
+
+        {/* Row of 4 cards */}
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Attendance */}
+          <Card title="Attendance">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-center">
+              <div className="flex justify-center md:justify-start">
+                <Donut
+                  percent={attendancePct}
+                  label={`${Math.round(attendancePct)}%`}
+                />
+              </div>
+
+              <div>
+                <div className="text-4xl font-semibold text-slate-900">
+                  {attendancePct.toFixed(1)}%
+                </div>
+                <div className="mt-2 text-slate-600">
+                  You’ve missed{" "}
+                  <span className="font-semibold">{missedDays} days</span> this year.
+                </div>
+
+                <TinyGoalBar value={82} />
+
+                <div className="mt-3 text-sm text-slate-500">
+                  Missing fewer than <span className="font-medium">8 days</span>{" "}
+                  keeps you on track.
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Testing Overview */}
+          <Card title="Testing Overview" subtitle="Latest available scores">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="text-sm text-slate-600">iLearn Test</div>
+                <div className="mt-1 text-3xl font-semibold text-slate-900">
+                  412
+                </div>
+                <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-2 py-1 text-sm text-emerald-700 ring-1 ring-emerald-200/70">
+                  <TrendingUp className="h-4 w-4" /> 9%
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="text-sm text-slate-600">WIDA Composite</div>
+                <div className="mt-1 text-3xl font-semibold text-slate-900">
+                  4.2
+                </div>
+                <div className="mt-2 inline-flex items-center rounded-lg bg-emerald-50 px-2 py-1 text-xs text-slate-600 ring-1 ring-emerald-200/70">
+                  Scale: 1.0–6.0
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="text-sm text-slate-600">ELA</div>
+                <div className="mt-1 text-3xl font-semibold text-slate-900">
+                  211
+                </div>
+                <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-2 py-1 text-sm text-emerald-700 ring-1 ring-emerald-200/70">
+                  <TrendingUp className="h-4 w-4" /> 9%
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="text-sm text-slate-600">SAT</div>
+                <div className="mt-1 text-3xl font-semibold text-slate-400">
+                  N/A
+                </div>
+                <div className="mt-2 inline-flex items-center rounded-lg bg-slate-50 px-2 py-1 text-xs text-slate-600 ring-1 ring-slate-200/70">
+                  Grade 11 only
+                </div>
+              </div>
+            </div>
+
+            <button className="mt-4 flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200/70 hover:bg-slate-50">
+              <span className="font-medium">iLearn Checkpoints</span>
+              <span className="flex items-center gap-4 text-slate-500">
+                <span>388</span>
+                <span>4.02</span>
+                <span>415</span>
+                <span>500</span>
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </button>
+          </Card>
+
+          {/* Academics */}
+          <Card
+            title="Academics"
+            icon={<GraduationCap className="h-5 w-5" />}
+            right={
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 ring-1 ring-emerald-200/70">
+                <CheckSquare className="h-4 w-4 text-emerald-700" />
+              </div>
+            }
+          >
+            <div className="overflow-hidden rounded-xl ring-1 ring-slate-200/70">
+              {[
+                { k: "Math", v: "Improving", icon: <TrendingUp className="h-4 w-4 text-emerald-600" /> },
+                { k: "Reading", v: "Needs Attention", icon: <AlertTriangle className="h-4 w-4 text-amber-500" /> },
+                { k: "ELA", v: "Improving", icon: <TrendingUp className="h-4 w-4 text-emerald-600" /> },
+                { k: "Science", v: "Steady", icon: <div className="h-1 w-5 rounded-full bg-slate-300" /> },
+              ].map((row, idx) => (
+                <div
+                  key={row.k}
+                  className={classNames(
+                    "flex items-center justify-between bg-white px-4 py-3",
+                    idx !== 3 && "border-b border-slate-200/70"
+                  )}
+                >
+                  <div className="text-lg text-slate-900">{row.k}</div>
+                  <div className="flex items-center gap-2 text-slate-600">
+                    {row.icon}
+                    <span className="font-medium">{row.v}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Testing Progress */}
+          <Card
+            title="Testing Progress"
+            icon={<Star className="h-5 w-5 text-blue-600" />}
+          >
+            <div className="rounded-xl bg-gradient-to-b from-emerald-50 to-white ring-1 ring-emerald-200/60 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-lg text-slate-700">
+                    Latest iLearn :{" "}
+                    <span className="text-2xl font-semibold text-emerald-700">
+                      412
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xl font-semibold text-slate-900">
+                    On Track <TrendingUp className="h-5 w-5 text-emerald-600" />
+                  </div>
+                </div>
+              </div>
+
+              <MiniSparkline />
+
+              <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
+                <div>
+                  <span className="font-medium">PSAT:</span> 920
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <span>SAT: Not yet (Grade 11)</span>
+                  <ChevronRight className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-slate-600">
+              You’re above this year’s benchmark. 🎉
+            </div>
+          </Card>
+        </div>
+
+        {/* Subject Progress row */}
+        <div className="mt-6 rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <div className="p-6">
+            <div className="text-2xl font-semibold text-slate-900">
+              Subject Progress
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+              {[
+                { title: "Math", desc: "Up since last test", bar: "bg-emerald-500", bg: "bg-emerald-50", icon: <TrendingUp className="h-4 w-4 text-emerald-700" /> },
+                { title: "Reading", desc: "Dropped slightly", bar: "bg-red-400", bg: "bg-rose-50", icon: <AlertTriangle className="h-4 w-4 text-rose-600" /> },
+                { title: "ELA", desc: "Improving", bar: "bg-blue-400", bg: "bg-blue-50", icon: <TrendingUp className="h-4 w-4 text-blue-700" /> },
+                { title: "Science", desc: "Holding steady", bar: "bg-amber-400", bg: "bg-amber-50", icon: <div className="h-1 w-5 rounded-full bg-amber-500" /> },
+              ].map((s) => (
+                <div key={s.title} className={classNames("rounded-2xl p-4 ring-1 ring-slate-200/70", s.bg)}>
+                  <div className="text-xl font-semibold text-slate-900">{s.title}</div>
+                  <div className="mt-2 flex items-center gap-2 text-slate-600">
+                    <span>{s.desc}</span>
+                    {s.icon}
+                  </div>
+                  <div className="mt-4 h-2 rounded-full bg-white/70">
+                    <div className={classNames("h-2 rounded-full", s.bar)} style={{ width: "68%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Weekly actions */}
+        <div className="mt-6 rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <div className="p-6">
+            <div className="text-2xl font-semibold text-slate-900">
+              What You Can Do This Week
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 grid h-8 w-8 place-items-center rounded-xl bg-blue-50 ring-1 ring-blue-200/60">
+                    <CheckSquare className="h-4 w-4 text-blue-700" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-slate-900">
+                      Practice reading{" "}
+                      <span className="font-semibold">15 minutes daily</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-slate-500">
+                      <Pencil className="h-4 w-4" />
+                      <span>Quick habit</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3">
+                  <div className="mt-1 grid h-8 w-8 place-items-center rounded-xl bg-blue-50 ring-1 ring-blue-200/60">
+                    <CheckSquare className="h-4 w-4 text-blue-700" />
+                  </div>
+                  <div className="text-slate-900">
+                    Writing support session Thursday
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 grid h-8 w-8 place-items-center rounded-xl bg-emerald-50 ring-1 ring-emerald-200/60">
+                    <Pencil className="h-4 w-4 text-emerald-700" />
+                  </div>
+                  <div className="text-slate-900">
+                    Writing support session Thursday
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3">
+                  <div className="mt-1 grid h-8 w-8 place-items-center rounded-xl bg-emerald-50 ring-1 ring-emerald-200/60">
+                    <Target className="h-4 w-4 text-emerald-700" />
+                  </div>
+                  <div className="text-slate-900">
+                    Aim for perfect attendance this week
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* spacing at bottom */}
+        <div className="h-10" />
+      </div>
+    </div>
+  );
+}
