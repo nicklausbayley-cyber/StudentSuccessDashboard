@@ -11,8 +11,6 @@ SlidersHorizontal,
   ShieldCheck,
   Shield,
 } from "lucide-react";
-import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
-
 import {
   PieChart,
   Pie,
@@ -231,21 +229,17 @@ const spark = [
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
-      <DemoRoleSwitcher />
       <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Top bar */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              
-              <DemoRoleSwitcher />
-<div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
                 <Building2 className="h-5 w-5 text-slate-700" />
               </div>
               <div>
                 <div className="text-xl font-semibold text-slate-900">
                   Student Achievement Dashboard
                 </div>
-                <div className="text-sm text-slate-500">Wabash Demo District</div>
               </div>
             </div>
 
@@ -386,7 +380,28 @@ const spark = [
                   Clear filters
                 </button>
               </div>
-<div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
+              {/* Results + quick actions */}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div className="text-slate-600">
+                  Showing <span className="font-semibold text-slate-900">{rows.length}</span> student{rows.length === 1 ? "" : "s"}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ("");
+                    setRiskFilter("All");
+                    setGradeFilter("All");
+                    setHomeFilter("All");
+                  }}
+                  className="inline-flex h-9 items-center rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+                >
+                  Clear filters
+                </button>
+              </div>
+
+
+
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
               <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                 <div>Student</div>
                 <div>Grade</div>

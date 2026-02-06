@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { DEMO_STUDENTS, type Risk } from "../../demo/demoData";
 import {
   Building2,
   Search,
+  User2,
   ChevronDown,
 SlidersHorizontal,
   MoreHorizontal,
@@ -11,8 +11,6 @@ SlidersHorizontal,
   ShieldCheck,
   Shield,
 } from "lucide-react";
-import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
-
 import {
   PieChart,
   Pie,
@@ -126,6 +124,7 @@ function KPI({ label, value, delta, sub }: KPIProps) {
   );
 }
 
+type Risk = "High Risk" | "At Risk" | "On Watch" | "Low Risk";
 
 const RISK_META: Record<Risk, { tone: "rose" | "amber" | "emerald" | "slate"; icon: React.ReactNode }> = {
   "High Risk": { tone: "rose", icon: <ShieldAlert className="h-4 w-4" /> },
@@ -134,7 +133,28 @@ const RISK_META: Record<Risk, { tone: "rose" | "amber" | "emerald" | "slate"; ic
   "Low Risk": { tone: "emerald", icon: <ShieldCheck className="h-4 w-4" /> },
 };
 
+type StudentRow = {
+  name: string;
+  grade: number;
+  homeroom: string;
+  newaMath: number;
+  attendance: number; // percent
+  wida: number;
+  risk: Risk;
+};
 
+const DEMO_STUDENTS: StudentRow[] = [
+  { name: "Jordan Lee", grade: 7, homeroom: "B", newaMath: 215, attendance: 71, wida: 412, risk: "On Watch" },
+  { name: "Avery Patel", grade: 7, homeroom: "A", newaMath: 246, attendance: 59, wida: 575, risk: "At Risk" },
+  { name: "Mason Rodriguez", grade: 8, homeroom: "A", newaMath: 208, attendance: 69, wida: 555, risk: "At Risk" },
+  { name: "Olivia Nguyen", grade: 8, homeroom: "A", newaMath: 211, attendance: 89, wida: 553, risk: "High Risk" },
+  { name: "Xavier Brown", grade: 11, homeroom: "A", newaMath: 253, attendance: 89, wida: 537, risk: "Low Risk" },
+  { name: "Emma Davis", grade: 11, homeroom: "A", newaMath: 263, attendance: 59, wida: 532, risk: "At Risk" },
+  { name: "Lucas Chen", grade: 7, homeroom: "A", newaMath: 255, attendance: 59, wida: 531, risk: "At Risk" },
+  { name: "Sophia Wilson", grade: 8, homeroom: "A", newaMath: 233, attendance: 89, wida: 532, risk: "High Risk" },
+  { name: "Caleb Martinez", grade: 10, homeroom: "A", newaMath: 288, attendance: 69, wida: 528, risk: "At Risk" },
+  { name: "Mia Hernandez", grade: 9, homeroom: "A", newaMath: 239, attendance: 89, wida: 527, risk: "Low Risk" },
+];
 
 function TrendBadge({ pct }: { pct: number }) {
   const up = pct >= 0;
@@ -160,7 +180,17 @@ export default function CounselorDashboard() {
 
   
   const [homeFilter, setHomeFilter] = useState<string | "All">("All");
-const rows = useMemo(() => {
+const gradeOptions = useMemo(() => {
+    const g = Array.from(new Set(DEMO_STUDENTS.map((s) => s.grade))).sort((a, b) => a - b);
+    return g;
+  }, []);
+
+  const homeOptions = useMemo(() => {
+    const h = Array.from(new Set(DEMO_STUDENTS.map((s) => s.homeroom))).sort();
+    return h;
+  }, []);
+
+  const rows = useMemo(() => {
     return DEMO_STUDENTS.filter((s) => {
       const matchQ =
         !q ||
@@ -192,29 +222,7 @@ const rows = useMemo(() => {
     }));
   }, []);
 
-  
-  const kpis = useMemo(() => {
-    const total = DEMO_STUDENTS.length || 1;
-
-    const avg = (nums: number[]) => (nums.reduce((a, b) => a + b, 0) / (nums.length || 1));
-    const attendanceAvg = avg(DEMO_STUDENTS.map((s) => s.attendance));
-    const newaAvg = avg(DEMO_STUDENTS.map((s) => s.newaMath));
-    const widaAvg = avg(DEMO_STUDENTS.map((s) => s.wida));
-
-    const atRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk" || s.risk === "At Risk").length;
-    const highRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk").length;
-
-    // Demo-friendly formatting
-    return {
-      attendance: `${attendanceAvg.toFixed(1)}%`,
-      newaMath: `${Math.round(newaAvg)}`,
-      wida: `${Math.round(widaAvg)}`,
-      atRisk: `${atRiskCount}`,
-      highRisk: `${highRiskCount}`,
-      total: `${total}`,
-    };
-  }, []);
-const spark = [
+  const spark = [
     { x: "W1", y: 380 },
     { x: "W2", y: 395 },
     { x: "W3", y: 402 },
@@ -231,35 +239,107 @@ const spark = [
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
-      <DemoRoleSwitcher />
       <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Top bar */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              
-              <DemoRoleSwitcher />
-<div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
-                <Building2 className="h-5 w-5 text-slate-700" />
-              </div>
-              <div>
-                <div className="text-xl font-semibold text-slate-900">
-                  Student Achievement Dashboard
-                </div>
-                <div className="text-sm text-slate-500">Wabash Demo District</div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <Building2 className="h-5 w-5 text-slate-700" />
+            </div>
+            <div>
+              <div className="text-xl font-semibold text-slate-900">
+                Student Achievement Dashboard
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                Demo Data
-              </div>
-<button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
-                <ChevronDown className="h-4 w-4 text-slate-500" />
-              </button>
-            </div>
+{/* Student list controls */}
+<div className="mt-6 rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
+  <div className="p-5">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Search */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-sm ring-1 ring-slate-200/70 sm:w-[360px]">
+          <Search className="h-4 w-4 text-slate-500" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+            placeholder="Search student name, grade, or homeroom..."
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+            <select
+              value={gradeFilter}
+              onChange={(e) =>
+                setGradeFilter(e.target.value === "All" ? "All" : Number(e.target.value))
+              }
+              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+            >
+              <option value="All">All Grades</option>
+              {gradeOptions.map((g) => (
+                <option key={g} value={g}>{`Grade ${g}`}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           </div>
 
-          {/* Filter bar */}
+                    <div className="relative">
+            <select
+              value={homeFilter}
+              onChange={(e) => setHomeFilter(e.target.value as any)}
+              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+            >
+              <option value="All">All Homerooms</option>
+              {homeOptions.map((h) => (
+                <option key={h} value={h}>{`Homeroom ${h}`}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Risk pills */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-rose-50 px-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-200/70 hover:bg-rose-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+          High Risk
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-amber-50 px-3 text-sm font-semibold text-amber-700 ring-1 ring-amber-200/70 hover:bg-amber-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+          At Risk
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200/70 hover:bg-emerald-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          On Watch
+        </button>
+        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-50 px-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200/70 hover:bg-slate-100/60">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+          Low Risk
+        </button>
+        <button className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50">
+          <span className="text-lg leading-none">⋯</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+          </div>
+
+          <div className="flex items-center gap-3">
+
+            <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <User2 className="h-5 w-5 text-slate-700" />
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter bar */}
         
 {/* Filters */}
 <div className="mt-6 flex flex-col gap-3">
@@ -306,11 +386,11 @@ const spark = [
 </div>
 {/* KPI row */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KPI label="Attendance (avg)" value={kpis.attendance} sub={`Across ${kpis.total} students`} />
-  <KPI label="NEWA Math (avg)" value={kpis.newaMath} sub="Demo data derived from roster" />
-  <KPI label="At Risk" value={kpis.atRisk} sub={`High Risk: ${kpis.highRisk}`} />
-  <KPI label="WIDA (avg)" value={kpis.wida} sub="Demo composite score" />
-</div>
+          <KPI label="Attendance" value="91.4%" delta="↑ 1.2%" sub="You’ve missed 12 days this year." />
+          <KPI label="iLearn Test Average" value="417" delta="↑ 4   +4" sub="↑ 15% from last period" />
+          <KPI label="At Risk" value="28" sub="students   ↑ +6% more at period" />
+          <KPI label="WIDA Average" value="4.6" delta="↑ 0.2   +0.2" sub="↑ 4.6→4.12 9   60.52" />
+        </div>
 
         {/* Main grid: table + right column */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -324,7 +404,7 @@ const spark = [
               </button>
             }
           >
-{/* Controls row */}
+            {/* Controls row */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-2 ring-1 ring-slate-200/70">
                 <Search className="h-4 w-4 text-slate-500" />
@@ -386,7 +466,9 @@ const spark = [
                   Clear filters
                 </button>
               </div>
-<div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
+
+
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
               <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                 <div>Student</div>
                 <div>Grade</div>
@@ -397,21 +479,13 @@ const spark = [
               </div>
 
               <div className="divide-y divide-slate-200/70 bg-white">
-                {rows.length === 0 ? (
-                    <div className="px-4 py-12 text-center">
-                      <div className="text-base font-semibold text-slate-900">No students match your filters</div>
-                      <div className="mt-1 text-sm text-slate-600">
-                        Try adjusting Grade, Homeroom, Risk, or clearing the search.
-                      </div>
-                    </div>
-                  ) : (
-                    rows.map((s) => (
+                {rows.map((s) => (
                   <button
                     key={s.name}
                     onClick={() => setSelected(s.name)}
                     className={cx(
-                      "grid w-full grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] items-center px-4 py-3 text-left text-sm transition-colors",
-                      selected === s.name ? "bg-slate-50" : "hover:bg-slate-50 hover:shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]"
+                      "grid w-full grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] items-center px-4 py-3 text-left text-sm",
+                      selected === s.name ? "bg-slate-50" : "hover:bg-slate-50/70"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -441,8 +515,7 @@ const spark = [
                     </div>
                     <div className="text-slate-700">{s.wida}</div>
                   </button>
-                ))
-                  )}
+                ))}
               </div>
             </div>
           </Card>

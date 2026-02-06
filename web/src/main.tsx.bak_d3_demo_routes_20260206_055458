@@ -14,22 +14,18 @@ function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/demo/student" element={<StudentDashboard />} />
-        <Route path="/demo/counselor" element={<CounselorDashboard />} />
-
-
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/counselor" element={<CounselorDashboard />} />
         <Route path="/login" element={<Login />} />
 
-
         <Route path="/students" element={<Students />} />
 
+        {/* Student role UI */}
+        {/* Counselor role UI */}
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="*" element={<Navigate to="/student" replace />} />
-
-          </Routes>
-</BrowserRouter>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

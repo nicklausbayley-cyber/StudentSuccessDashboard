@@ -1,6 +1,7 @@
 import React from "react";
 import { getDefaultStudent } from "../../demo/demoData";
 import {
+import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
   Home,
   Search,
   User2,
@@ -13,7 +14,6 @@ import {
   CheckSquare,
   Pencil,
 } from "lucide-react";
-import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
 
 function classNames(...c: Array<string | false | undefined | null>) {
   return c.filter(Boolean).join(" ");
@@ -61,7 +61,6 @@ function Card({
             <div className="flex items-center gap-2">
               {icon ? <div className="text-slate-500">{icon}</div> : null}
               <div className="text-xl font-semibold text-slate-900">{title}</div>
-          <div className="text-sm text-slate-500">Wabash Demo District</div>
             </div>
             {subtitle ? <div className="mt-1 text-sm text-slate-500">{subtitle}</div> : null}
           </div>
