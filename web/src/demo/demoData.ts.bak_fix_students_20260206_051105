@@ -1,0 +1,169 @@
+export type Risk = "High Risk" | "At Risk" | "On Watch" | "Low Risk";
+
+export type StudentRow = {
+  id: string;
+  name: string;
+  grade: number;
+  homeroom: string;
+  newaMath: number;
+  newaReading: number;
+  attendance: number; // percent
+  wida: number;
+  iLearn: number;
+  risk: Risk;
+};
+
+export const DEMO_STUDENTS: StudentRow[] = [
+  {
+    id: "stu_001",
+    name: "Jordan Lee",
+    grade: 7,
+    homeroom: "B",
+    newaMath: 215,
+    newaReading: 208,
+    attendance: 71,
+    wida: 412,
+    iLearn: 398,
+    risk: "On Watch",
+  },
+  {
+    id: "stu_002",
+    name: "Avery Patel",
+    grade: 7,
+    homeroom: "A",
+    newaMath: 246,
+    newaReading: 231,
+    attendance: 59,
+    wida: 575,
+    iLearn: 410,
+    risk: "At Risk",
+  },
+  {
+    id: "stu_003",
+    name: "Mason Rodriguez",
+    grade: 8,
+    homeroom: "A",
+    newaMath: 208,
+    newaReading: 201,
+    attendance: 69,
+    wida: 555,
+    iLearn: 392,
+    risk: "At Risk",
+  },
+  {
+    id: "stu_004",
+    name: "Olivia Nguyen",
+    grade: 8,
+    homeroom: "A",
+    newaMath: 211,
+    newaReading: 193,
+    attendance: 89,
+    wida: 553,
+    iLearn: 421,
+    risk: "High Risk",
+  },
+  {
+    id: "stu_005",
+    name: "Xavier Brown",
+    grade: 11,
+    homeroom: "A",
+    newaMath: 253,
+    newaReading: 246,
+    attendance: 89,
+    wida: 537,
+    iLearn: 446,
+    risk: "Low Risk",
+  },
+  {
+    id: "stu_006",
+    name: "Emma Davis",
+    grade: 11,
+    homeroom: "A",
+    newaMath: 263,
+    newaReading: 255,
+    attendance: 59,
+    wida: 532,
+    iLearn: 405,
+    risk: "At Risk",
+  },
+  {
+    id: "stu_007",
+    name: "Lucas Chen",
+    grade: 7,
+    homeroom: "A",
+    newaMath: 255,
+    newaReading: 242,
+    attendance: 59,
+    wida: 531,
+    iLearn: 401,
+    risk: "At Risk",
+  },
+  {
+    id: "stu_008",
+    name: "Sophia Wilson",
+    grade: 8,
+    homeroom: "A",
+    newaMath: 233,
+    newaReading: 224,
+    attendance: 89,
+    wida: 532,
+    iLearn: 432,
+    risk: "High Risk",
+  },
+  {
+    id: "stu_009",
+    name: "Caleb Martinez",
+    grade: 10,
+    homeroom: "A",
+    newaMath: 288,
+    newaReading: 273,
+    attendance: 69,
+    wida: 528,
+    iLearn: 439,
+    risk: "At Risk",
+  },
+  {
+    id: "stu_010",
+    name: "Mia Hernandez",
+    grade: 9,
+    homeroom: "A",
+    newaMath: 239,
+    newaReading: 228,
+    attendance: 89,
+    wida: 527,
+    iLearn: 418,
+    risk: "Low Risk",
+  },
+
+  // --- EXTRA DEMO STUDENTS ---
+  { name: "Noah Thompson", grade: 6, homeroom: "B", newaMath: 232, attendance: 93, wida: 520, risk: "Low Risk" },
+  { name: "Liam Jackson", grade: 6, homeroom: "C", newaMath: 210, attendance: 82, wida: 495, risk: "On Watch" },
+  { name: "Isabella Moore", grade: 5, homeroom: "A", newaMath: 198, attendance: 76, wida: 468, risk: "At Risk" },
+  { name: "Sophia Martin", grade: 4, homeroom: "B", newaMath: 205, attendance: 71, wida: 455, risk: "High Risk" },
+  { name: "Ethan Wright", grade: 9, homeroom: "D", newaMath: 254, attendance: 89, wida: 510, risk: "Low Risk" },
+  { name: "Amelia Scott", grade: 10, homeroom: "C", newaMath: 241, attendance: 83, wida: 498, risk: "On Watch" },
+  { name: "Mia Adams", grade: 11, homeroom: "A", newaMath: 262, attendance: 78, wida: 505, risk: "At Risk" },
+  { name: "Aiden Baker", grade: 12, homeroom: "B", newaMath: 270, attendance: 92, wida: 522, risk: "Low Risk" },
+  { name: "Harper Nelson", grade: 7, homeroom: "C", newaMath: 226, attendance: 67, wida: 470, risk: "High Risk" },
+  { name: "Elijah Carter", grade: 8, homeroom: "D", newaMath: 219, attendance: 74, wida: 482, risk: "At Risk" },
+  { name: "Abigail Mitchell", grade: 3, homeroom: "A", newaMath: 190, attendance: 88, wida: 430, risk: "On Watch" },
+  { name: "James Perez", grade: 3, homeroom: "B", newaMath: 184, attendance: 66, wida: 415, risk: "High Risk" },
+  { name: "Charlotte Roberts", grade: 5, homeroom: "C", newaMath: 214, attendance: 91, wida: 460, risk: "Low Risk" },
+  { name: "Benjamin Turner", grade: 9, homeroom: "A", newaMath: 238, attendance: 79, wida: 490, risk: "At Risk" },
+  { name: "Evelyn Phillips", grade: 12, homeroom: "D", newaMath: 275, attendance: 84, wida: 515, risk: "On Watch" },
+
+];
+
+export function getStudentByName(name: string): StudentRow {
+  return DEMO_STUDENTS.find((s) => s.name === name) ?? DEMO_STUDENTS[0];
+}
+
+export function getDefaultStudent(): StudentRow {
+  return DEMO_STUDENTS[0];
+}
+
+export function riskCounts(students: StudentRow[]) {
+  const base: Record<Risk, number> = { "High Risk": 0, "At Risk": 0, "On Watch": 0, "Low Risk": 0 };
+  for (const s of students) base[s.risk] += 1;
+  return base;
+}

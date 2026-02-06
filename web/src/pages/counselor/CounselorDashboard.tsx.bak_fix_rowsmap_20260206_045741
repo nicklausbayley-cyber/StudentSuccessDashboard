@@ -11,8 +11,6 @@ SlidersHorizontal,
   ShieldCheck,
   Shield,
 } from "lucide-react";
-import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
-
 import {
   PieChart,
   Pie,
@@ -192,29 +190,7 @@ const rows = useMemo(() => {
     }));
   }, []);
 
-  
-  const kpis = useMemo(() => {
-    const total = DEMO_STUDENTS.length || 1;
-
-    const avg = (nums: number[]) => (nums.reduce((a, b) => a + b, 0) / (nums.length || 1));
-    const attendanceAvg = avg(DEMO_STUDENTS.map((s) => s.attendance));
-    const newaAvg = avg(DEMO_STUDENTS.map((s) => s.newaMath));
-    const widaAvg = avg(DEMO_STUDENTS.map((s) => s.wida));
-
-    const atRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk" || s.risk === "At Risk").length;
-    const highRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk").length;
-
-    // Demo-friendly formatting
-    return {
-      attendance: `${attendanceAvg.toFixed(1)}%`,
-      newaMath: `${Math.round(newaAvg)}`,
-      wida: `${Math.round(widaAvg)}`,
-      atRisk: `${atRiskCount}`,
-      highRisk: `${highRiskCount}`,
-      total: `${total}`,
-    };
-  }, []);
-const spark = [
+  const spark = [
     { x: "W1", y: 380 },
     { x: "W2", y: 395 },
     { x: "W3", y: 402 },
@@ -231,21 +207,17 @@ const spark = [
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
-      <DemoRoleSwitcher />
       <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Top bar */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              
-              <DemoRoleSwitcher />
-<div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
                 <Building2 className="h-5 w-5 text-slate-700" />
               </div>
               <div>
                 <div className="text-xl font-semibold text-slate-900">
                   Student Achievement Dashboard
                 </div>
-                <div className="text-sm text-slate-500">Wabash Demo District</div>
               </div>
             </div>
 
@@ -306,11 +278,11 @@ const spark = [
 </div>
 {/* KPI row */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KPI label="Attendance (avg)" value={kpis.attendance} sub={`Across ${kpis.total} students`} />
-  <KPI label="NEWA Math (avg)" value={kpis.newaMath} sub="Demo data derived from roster" />
-  <KPI label="At Risk" value={kpis.atRisk} sub={`High Risk: ${kpis.highRisk}`} />
-  <KPI label="WIDA (avg)" value={kpis.wida} sub="Demo composite score" />
-</div>
+          <KPI label="Attendance" value="91.4%" delta="↑ 1.2%" sub="You’ve missed 12 days this year." />
+          <KPI label="iLearn Test Average" value="417" delta="↑ 4   +4" sub="↑ 15% from last period" />
+          <KPI label="At Risk" value="28" sub="students   ↑ +6% more at period" />
+          <KPI label="WIDA Average" value="4.6" delta="↑ 0.2   +0.2" sub="↑ 4.6→4.12 9   60.52" />
+        </div>
 
         {/* Main grid: table + right column */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -386,7 +358,28 @@ const spark = [
                   Clear filters
                 </button>
               </div>
-<div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
+              {/* Results + quick actions */}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div className="text-slate-600">
+                  Showing <span className="font-semibold text-slate-900">{rows.length}</span> student{rows.length === 1 ? "" : "s"}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ("");
+                    setRiskFilter("All");
+                    setGradeFilter("All");
+                    setHomeFilter("All");
+                  }}
+                  className="inline-flex h-9 items-center rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+                >
+                  Clear filters
+                </button>
+              </div>
+
+
+
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
               <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                 <div>Student</div>
                 <div>Grade</div>
@@ -405,7 +398,7 @@ const spark = [
                       </div>
                     </div>
                   ) : (
-                    rows.map((s) => (
+                    {rows.map((s) => (
                   <button
                     key={s.name}
                     onClick={() => setSelected(s.name)}
@@ -441,7 +434,7 @@ const spark = [
                     </div>
                     <div className="text-slate-700">{s.wida}</div>
                   </button>
-                ))
+                ))}
                   )}
               </div>
             </div>

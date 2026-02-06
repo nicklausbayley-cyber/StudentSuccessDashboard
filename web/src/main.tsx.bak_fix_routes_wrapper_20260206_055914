@@ -13,23 +13,24 @@ import CounselorDashboard from "./pages/counselor/CounselorDashboard";
 function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
+      \1
+
+        {/* Demo routes (no auth) */}
         <Route path="/demo/student" element={<StudentDashboard />} />
         <Route path="/demo/counselor" element={<CounselorDashboard />} />
-
 
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/counselor" element={<CounselorDashboard />} />
         <Route path="/login" element={<Login />} />
 
-
         <Route path="/students" element={<Students />} />
 
+        {/* Student role UI */}
+        {/* Counselor role UI */}
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="*" element={<Navigate to="/student" replace />} />
-
-          </Routes>
-</BrowserRouter>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

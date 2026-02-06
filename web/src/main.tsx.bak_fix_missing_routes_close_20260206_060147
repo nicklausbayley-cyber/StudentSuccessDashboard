@@ -28,8 +28,7 @@ function AppRouter() {
         <Route path="/" element={<Navigate to="/student" replace />} />
         <Route path="*" element={<Navigate to="/student" replace />} />
 
-          </Routes>
-</BrowserRouter>
+    </BrowserRouter>
   );
 }
 
