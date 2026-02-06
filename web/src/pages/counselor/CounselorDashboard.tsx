@@ -241,105 +241,26 @@ const gradeOptions = useMemo(() => {
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Top bar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
-              <Building2 className="h-5 w-5 text-slate-700" />
-            </div>
-            <div>
-              <div className="text-xl font-semibold text-slate-900">
-                Student Achievement Dashboard
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+                <Building2 className="h-5 w-5 text-slate-700" />
+              </div>
+              <div>
+                <div className="text-xl font-semibold text-slate-900">
+                  Student Achievement Dashboard
+                </div>
               </div>
             </div>
 
-{/* Student list controls */}
-<div className="mt-6 rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 backdrop-blur">
-  <div className="p-5">
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      {/* Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 shadow-sm ring-1 ring-slate-200/70 sm:w-[360px]">
-          <Search className="h-4 w-4 text-slate-500" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-            placeholder="Search student name, grade, or homeroom..."
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative">
-            <select
-              value={gradeFilter}
-              onChange={(e) =>
-                setGradeFilter(e.target.value === "All" ? "All" : Number(e.target.value))
-              }
-              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
-            >
-              <option value="All">All Grades</option>
-              {gradeOptions.map((g) => (
-                <option key={g} value={g}>{`Grade ${g}`}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              </button>
+            </div>
           </div>
 
-                    <div className="relative">
-            <select
-              value={homeFilter}
-              onChange={(e) => setHomeFilter(e.target.value as any)}
-              className="h-11 appearance-none rounded-2xl bg-white px-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
-            >
-              <option value="All">All Homerooms</option>
-              {homeOptions.map((h) => (
-                <option key={h} value={h}>{`Homeroom ${h}`}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          </div>
-        </div>
-      </div>
-
-      {/* Risk pills */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-rose-50 px-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-200/70 hover:bg-rose-100/60">
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
-          High Risk
-        </button>
-        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-amber-50 px-3 text-sm font-semibold text-amber-700 ring-1 ring-amber-200/70 hover:bg-amber-100/60">
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-          At Risk
-        </button>
-        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200/70 hover:bg-emerald-100/60">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          On Watch
-        </button>
-        <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-50 px-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200/70 hover:bg-slate-100/60">
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-          Low Risk
-        </button>
-        <button className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50">
-          <span className="text-lg leading-none">⋯</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-          </div>
-
-          <div className="flex items-center gap-3">
-
-            <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
-              <User2 className="h-5 w-5 text-slate-700" />
-              <ChevronDown className="h-4 w-4 text-slate-500" />
-            </button>
-          </div>
-        </div>
-
-        {/* Filter bar */}
+          {/* Filter bar */}
         
 {/* Filters */}
 <div className="mt-6 flex flex-col gap-3">
@@ -447,8 +368,29 @@ const gradeOptions = useMemo(() => {
             </div>
 
             {/* Table */}
-            <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-slate-200/70">
-              <div className="grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
+{/* Result count + clear */}
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="text-sm text-slate-600">
+                  Showing <span className="font-semibold">{rows.length}</span>{" "}
+                  <span className="hidden sm:inline">students</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ("");
+                    setRiskFilter("All");
+                    setGradeFilter("All");
+                    setHomeFilter("All");
+                  }}
+                  className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+                >
+                  Clear filters
+                </button>
+              </div>
+
+
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
+              <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                 <div>Student</div>
                 <div>Grade</div>
                 <div>Homeroom</div>
