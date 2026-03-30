@@ -4,11 +4,22 @@ from alembic import context
 
 from config import settings
 from base import Base
-import app.models  # noqa
+
+import district  # noqa
+import district_domain  # noqa
+import school  # noqa
+import user  # noqa
+import student  # noqa
+import attendance  # noqa
+import academic  # noqa
+import readiness  # noqa
 
 config = context.config
 if config.config_file_name:
-    fileConfig(config.config_file_name)
+    try:
+        fileConfig(config.config_file_name)
+    except KeyError:
+        pass
 
 target_metadata = Base.metadata
 

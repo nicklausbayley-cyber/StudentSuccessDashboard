@@ -11,3 +11,4 @@ class District(Base):
     schools = relationship("School", back_populates="district", cascade="all, delete-orphan")
     users = relationship("User", back_populates="district", cascade="all, delete-orphan")
     students = relationship("Student", back_populates="district", cascade="all, delete-orphan")
+    domains = relationship("DistrictDomain", cascade="all, delete-orphan")
