@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from config import settings
 from deps import get_db
 from district_domain import DistrictDomain
+from student import Student
 from user import User
 from security import verify_password, create_access_token
 
@@ -59,6 +60,10 @@ def find_user_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
 
+def find_student_by_email(db: Session, email: str) -> Student | None:
+    return db.query(Student).filter(Student.student_email == email).first()
+
+
 def find_or_create_sso_user(
     db: Session,
     email: str,
@@ -70,13 +75,29 @@ def find_or_create_sso_user(
     if not district_domain:
         raise HTTPException(status_code=403, detail="Email domain is not associated with any district")
 
-    user = find_user_by_email(db, email)
+    existing_user = find_user_by_email(db, email)
+    if existing_user:
+        existing_user.auth_provider = provider
+        existing_user.external_subject_id = external_subject_id
+        existing_user.last_login_at = datetime.utcnow()
+        existing_user.is_active = True
+        db.add(existing_user)
+        db.commit()
+        db.refresh(existing_user)
+        return existing_user
 
-    if user:
-        user.auth_provider = provider
-        user.external_subject_id = external_subject_id
-        user.last_login_at = datetime.utcnow()
-        user.is_active = True
+    matched_student = find_student_by_email(db, email)
+    if matched_student:
+        user = User(
+            district_id=matched_student.district_id,
+            school_id=matched_student.school_id,
+            email=email,
+            role="student",
+            auth_provider=provider,
+            external_subject_id=external_subject_id,
+            is_active=True,
+            last_login_at=datetime.utcnow(),
+        )
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -211,7 +232,6 @@ def google_sso_callback(
             token_json = token_response.json()
 
             access_token = token_json.get("access_token")
-            id_token = token_json.get("id_token")
             if not access_token:
                 raise HTTPException(status_code=400, detail="Google token response did not include access_token")
 
