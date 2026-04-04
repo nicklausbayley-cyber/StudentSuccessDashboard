@@ -11,4 +11,4 @@ class AcademicRecord(Base):
     credits_expected: Mapped[float] = mapped_column(Float, default=0)
     growth_percentile: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    student = relationship("Student", back_populates="academics")
+    student = relationship("Student", back_populates="academic")

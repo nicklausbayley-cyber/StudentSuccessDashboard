@@ -18,6 +18,6 @@ class Student(Base):
 
     district = relationship("District", back_populates="students")
     school = relationship("School")
-    attendance = relationship("Attendance", back_populates="student", uselist=False, cascade="all, delete-orphan")
-    academic = relationship("Academic", back_populates="student", uselist=False, cascade="all, delete-orphan")
-    readiness = relationship("Readiness", back_populates="student", uselist=False, cascade="all, delete-orphan")
+    attendance = relationship("AttendanceRecord", back_populates="student", uselist=False, cascade="all, delete-orphan")
+    academic = relationship("AcademicRecord", back_populates="student", uselist=False, cascade="all, delete-orphan")
+    readiness = relationship("StudentReadiness", back_populates="student", uselist=False, cascade="all, delete-orphan")
