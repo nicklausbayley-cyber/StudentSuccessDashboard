@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext";
 import { getDefaultStudent } from "../../demo/demoData";
 import {
   Home,
@@ -61,7 +63,7 @@ function Card({
             <div className="flex items-center gap-2">
               {icon ? <div className="text-slate-500">{icon}</div> : null}
               <div className="text-xl font-semibold text-slate-900">{title}</div>
-          <div className="text-sm text-slate-500">Wabash Demo District</div>
+              <div className="text-sm text-slate-500">Wabash Demo District</div>
             </div>
             {subtitle ? <div className="mt-1 text-sm text-slate-500">{subtitle}</div> : null}
           </div>
@@ -81,9 +83,8 @@ function ProgressPill({ value }: { value: number }) {
   return (
     <div className="rounded-2xl bg-emerald-50/70 px-5 py-4 ring-1 ring-emerald-200/60">
       <div className="flex items-center gap-3">
-        
-              <DemoRoleSwitcher />
-<div className="text-sm font-medium text-slate-700">
+        <DemoRoleSwitcher />
+        <div className="text-sm font-medium text-slate-700">
           Overall Progress: <span className="font-semibold">{v}%</span>
         </div>
 
@@ -188,9 +189,11 @@ function SubjectMini({
 }
 
 export default function StudentDashboard() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   const demoStudent = getDefaultStudent();
-  void demoStudent; // demo-state: prevents unused var TS error
-  // mock-ish values
+  void demoStudent;
   const studentName = "Jordan!";
   const overallProgress = 78;
 
@@ -200,17 +203,15 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        {/* Top bar (matches mock) */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
               <Home className="h-5 w-5 text-slate-700" />
             </div>
             <div className="text-xl font-semibold text-slate-800">Student Dashboard</div>
-              <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                Demo Data
-              </div>
-
+            <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+              Demo Data
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -222,6 +223,16 @@ export default function StudentDashboard() {
               />
             </div>
 
+            <button
+              className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 hover:bg-slate-50"
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+            >
+              Log out
+            </button>
+
             <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
               <User2 className="h-5 w-5 text-slate-700" />
               <ChevronDown className="h-4 w-4 text-slate-500" />
@@ -229,7 +240,6 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Greeting + overall progress pill */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <div className="text-5xl font-semibold tracking-tight text-slate-900">
@@ -237,7 +247,6 @@ export default function StudentDashboard() {
             </div>
             <div className="mt-2 text-2xl text-slate-700">You’re currently:</div>
 
-            {/* On Track Overall banner */}
             <div className="mt-5 overflow-hidden rounded-2xl bg-white/70 shadow-sm ring-1 ring-black/5 backdrop-blur">
               <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 px-6 py-5 text-white">
                 <div className="flex items-center gap-3">
@@ -259,9 +268,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* 2x2 cards grid (matches mock) */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Attendance */}
           <Card title="Attendance">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-center">
               <div className="flex justify-center md:justify-start">
@@ -281,7 +288,6 @@ export default function StudentDashboard() {
             </div>
           </Card>
 
-          {/* Testing Overview */}
           <Card title="Testing Overview" subtitle="Latest available scores">
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
@@ -324,7 +330,6 @@ export default function StudentDashboard() {
             </div>
           </Card>
 
-          {/* Academics */}
           <Card
             title="Academics"
             icon={<Home className="h-5 w-5" />}
@@ -342,7 +347,6 @@ export default function StudentDashboard() {
             </div>
           </Card>
 
-          {/* Testing Progress */}
           <Card title="Testing Progress" icon={<Star className="h-5 w-5" />}>
             <div className="rounded-xl bg-emerald-50/60 ring-1 ring-emerald-200/60 p-4">
               <div className="text-lg text-slate-800">
@@ -368,7 +372,6 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Subject Progress row */}
         <div className="mt-6">
           <ShellCard>
             <div className="p-6">
@@ -403,7 +406,6 @@ export default function StudentDashboard() {
           </ShellCard>
         </div>
 
-        {/* What You Can Do This Week */}
         <div className="mt-6">
           <ShellCard>
             <div className="p-6">

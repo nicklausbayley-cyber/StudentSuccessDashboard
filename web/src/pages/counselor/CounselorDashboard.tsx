@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext";
 import { DEMO_STUDENTS, type Risk } from "../../demo/demoData";
 import {
   Building2,
@@ -153,6 +155,8 @@ function TrendBadge({ pct }: { pct: number }) {
 }
 
 export default function CounselorDashboard() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [riskFilter, setRiskFilter] = useState<Risk | "All">("All");
   const [selected, setSelected] = useState<string>("Jordan Lee");
@@ -253,7 +257,16 @@ const spark = [
               <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
                 Demo Data
               </div>
-<button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <button
+                className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 hover:bg-slate-50"
+                onClick={() => {
+                  logout();
+                  navigate("/login");
+                }}
+              >
+                Log out
+              </button>
+              <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </button>
             </div>

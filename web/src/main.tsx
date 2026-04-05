@@ -1,6 +1,14 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import "./index.css";
 
 import { AuthProvider, useAuth } from "./lib/AuthContext";
@@ -36,6 +44,64 @@ function AuthCallbackPage() {
   return <div style={{ padding: 24, fontFamily: "system-ui" }}>Signing you in...</div>;
 }
 
+function LoginRoute() {
+  const { isAuthenticated, role } = useAuth();
+
+  if (isAuthenticated) {
+    if (role === "student") {
+      return <Navigate to="/student" replace />;
+    }
+    return <Navigate to="/counselor" replace />;
+  }
+
+  return <Login />;
+}
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  return <>{children}</>;
+}
+
+function StudentOnly({ children }: { children: React.ReactNode }) {
+  const { role } = useAuth();
+
+  if (role !== "student") {
+    return <Navigate to="/counselor" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function StaffOnly({ children }: { children: React.ReactNode }) {
+  const { role } = useAuth();
+
+  if (role === "student") {
+    return <Navigate to="/student" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function HomeRoute() {
+  const { isAuthenticated, role } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role === "student") {
+    return <Navigate to="/student" replace />;
+  }
+
+  return <Navigate to="/counselor" replace />;
+}
+
 function AppRouter() {
   return (
     <BrowserRouter>
@@ -43,15 +109,44 @@ function AppRouter() {
         <Route path="/demo/student" element={<StudentDashboard />} />
         <Route path="/demo/counselor" element={<CounselorDashboard />} />
 
-        <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/counselor" element={<CounselorDashboard />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginRoute />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        <Route path="/students" element={<Students />} />
+        <Route
+          path="/student"
+          element={
+            <RequireAuth>
+              <StudentOnly>
+                <StudentDashboard />
+              </StudentOnly>
+            </RequireAuth>
+          }
+        />
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/counselor"
+          element={
+            <RequireAuth>
+              <StaffOnly>
+                <CounselorDashboard />
+              </StaffOnly>
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/students"
+          element={
+            <RequireAuth>
+              <StaffOnly>
+                <Students />
+              </StaffOnly>
+            </RequireAuth>
+          }
+        />
+
+        <Route path="/" element={<HomeRoute />} />
+        <Route path="*" element={<HomeRoute />} />
       </Routes>
     </BrowserRouter>
   );
