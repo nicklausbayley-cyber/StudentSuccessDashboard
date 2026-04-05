@@ -4,6 +4,7 @@ import { apiFetch } from "./api";
 type AuthCtx = {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  setTokenFromSSO: (token: string) => void;
   logout: () => void;
 };
 
@@ -23,12 +24,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(t);
   };
 
+  const setTokenFromSSO = (token: string) => {
+    localStorage.setItem("token", token);
+    setToken(token);
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
   };
 
-  const value = useMemo(() => ({ token, login, logout }), [token]);
+  const value = useMemo(() => ({ token, login, setTokenFromSSO, logout }), [token]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
