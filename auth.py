@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from config import settings
-from deps import get_db
+from deps import get_db, get_current_user
 from district_domain import DistrictDomain
 from student import Student
 from user import User
@@ -41,6 +41,16 @@ class AuthenticatedUserResponse(BaseModel):
     district_id: int
     role: str
     email: EmailStr
+
+
+class CurrentUserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    district_id: int
+    school_id: int | None = None
+    auth_provider: str | None = None
+    is_active: bool
 
 
 def get_email_domain(email: str) -> str:
@@ -265,3 +275,15 @@ def google_sso_callback(
     )
 
     return RedirectResponse(url=redirect_url)
+
+@router.get("/me", response_model=CurrentUserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return CurrentUserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        role=current_user.role,
+        district_id=current_user.district_id,
+        school_id=current_user.school_id,
+        auth_provider=current_user.auth_provider,
+        is_active=current_user.is_active,
+    )

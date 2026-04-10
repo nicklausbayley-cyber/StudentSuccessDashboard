@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "./api";
 
 type UserClaims = {
@@ -8,13 +8,25 @@ type UserClaims = {
   exp?: number;
 };
 
+type CurrentUser = {
+  id: number;
+  email: string;
+  role: string;
+  district_id: number;
+  school_id: number | null;
+  auth_provider: string | null;
+  is_active: boolean;
+};
+
 type AuthCtx = {
   token: string | null;
   claims: UserClaims | null;
+  currentUser: CurrentUser | null;
   isAuthenticated: boolean;
   role: string | null;
   login: (email: string, password: string) => Promise<void>;
   setTokenFromSSO: (token: string) => void;
+  refreshMe: () => Promise<void>;
   logout: () => void;
 };
 
@@ -49,9 +61,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return stored;
   });
 
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
   const claims = useMemo(() => (token ? parseJwt(token) : null), [token]);
-  const role = claims?.role ?? null;
+  const role = currentUser?.role ?? claims?.role ?? null;
   const isAuthenticated = !!token && !isTokenExpired(claims);
+
+  const refreshMe = async () => {
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
+
+    try {
+      const data = await apiFetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCurrentUser(data as CurrentUser);
+    } catch {
+      setCurrentUser(null);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      void refreshMe();
+    } else {
+      setCurrentUser(null);
+    }
+  }, [token]);
 
   const login = async (email: string, password: string) => {
     const data = await apiFetch("/api/auth/login", {
@@ -72,11 +112,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    setCurrentUser(null);
   };
 
   const value = useMemo(
-    () => ({ token, claims, isAuthenticated, role, login, setTokenFromSSO, logout }),
-    [token, claims, isAuthenticated, role]
+    () => ({
+      token,
+      claims,
+      currentUser,
+      isAuthenticated,
+      role,
+      login,
+      setTokenFromSSO,
+      refreshMe,
+      logout,
+    }),
+    [token, claims, currentUser, isAuthenticated, role]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

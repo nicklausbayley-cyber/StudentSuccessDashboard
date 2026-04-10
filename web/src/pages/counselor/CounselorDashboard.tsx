@@ -155,7 +155,7 @@ function TrendBadge({ pct }: { pct: number }) {
 }
 
 export default function CounselorDashboard() {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [riskFilter, setRiskFilter] = useState<Risk | "All">("All");
@@ -254,6 +254,12 @@ const spark = [
             </div>
 
             <div className="flex items-center gap-3">
+              {currentUser && (
+                <div className="hidden md:block rounded-2xl bg-white px-4 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-black/5">
+                  <div className="font-semibold text-slate-800">{currentUser.email}</div>
+                  <div>Role: {currentUser.role} • District: {currentUser.district_id}</div>
+                </div>
+              )}
               <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
                 Demo Data
               </div>
