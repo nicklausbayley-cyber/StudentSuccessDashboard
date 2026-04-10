@@ -118,25 +118,23 @@ def find_or_create_sso_user(
     return user
 
 
-def issue_basic_token(user: User) -> Token:
-    token = create_access_token(
+def create_app_token_for_user(user: User) -> str:
+    return create_access_token(
         str(user.id),
         extras={
             "district_id": user.district_id,
             "role": user.role,
         },
     )
+
+
+def issue_basic_token(user: User) -> Token:
+    token = create_app_token_for_user(user)
     return Token(access_token=token)
 
 
 def issue_app_token(user: User) -> AuthenticatedUserResponse:
-    token = create_access_token(
-        str(user.id),
-        extras={
-            "district_id": user.district_id,
-            "role": user.role,
-        },
-    )
+    token = create_app_token_for_user(user)
     return AuthenticatedUserResponse(
         access_token=token,
         user_id=user.id,
@@ -208,7 +206,7 @@ def google_sso_start():
     return RedirectResponse(url=google_auth_url)
 
 
-@router.get("/sso/google/callback", response_model=AuthenticatedUserResponse)
+@router.get("/sso/google/callback")
 def google_sso_callback(
     code: str | None = Query(default=None),
     state: str | None = Query(default=None),
@@ -250,10 +248,20 @@ def google_sso_callback(
     if not email or not external_subject_id:
         raise HTTPException(status_code=400, detail="Google userinfo response missing required identity fields")
 
-    return finalize_sso_login(
+    result = finalize_sso_login(
         db=db,
         email=email,
         provider="google",
         external_subject_id=external_subject_id,
         default_role="staff",
     )
+
+    redirect_url = (
+        f"{settings.frontend_auth_callback_url}"
+        f"?token={result.access_token}"
+        f"&role={result.role}"
+        f"&district_id={result.district_id}"
+        f"&email={result.email}"
+    )
+
+    return RedirectResponse(url=redirect_url)

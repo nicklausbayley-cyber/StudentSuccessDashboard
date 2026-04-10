@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_NAME: str = "student-readiness-mvp"
     APP_BASE_URL: str = "http://localhost:8000"
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
 
     JWT_SECRET: str = "change_me_in_production"
     JWT_ACCESS_TTL_MINUTES: int = 120
@@ -31,6 +32,10 @@ class Settings(BaseSettings):
     @property
     def google_redirect_uri(self) -> str:
         return f"{self.APP_BASE_URL}{self.GOOGLE_REDIRECT_PATH}"
+
+    @property
+    def frontend_auth_callback_url(self) -> str:
+        return f"{self.FRONTEND_BASE_URL}/auth/callback"
 
     class Config:
         env_file = ".env"
