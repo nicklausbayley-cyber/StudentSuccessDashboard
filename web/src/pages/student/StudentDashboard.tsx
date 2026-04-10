@@ -189,7 +189,7 @@ function SubjectMini({
 }
 
 export default function StudentDashboard() {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const demoStudent = getDefaultStudent();
@@ -215,6 +215,12 @@ export default function StudentDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            {currentUser && (
+              <div className="hidden md:block rounded-2xl bg-white px-4 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-black/5">
+                <div className="font-semibold text-slate-800">{currentUser.email}</div>
+                <div>Role: {currentUser.role} • District: {currentUser.district_id}</div>
+              </div>
+            )}
             <div className="hidden md:flex items-center gap-2 rounded-2xl bg-white px-4 py-2 shadow-sm ring-1 ring-black/5">
               <Search className="h-4 w-4 text-slate-500" />
               <input
