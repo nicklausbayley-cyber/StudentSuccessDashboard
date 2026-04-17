@@ -11,7 +11,9 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
   const res = await fetch(path, { ...init, headers });
   const text = await res.text();
   let data: any = null;
-  try { data = text ? JSON.parse(text) : null; } catch {}
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {}
 
   if (!res.ok) {
     const msg = (data && (data.detail || data.message)) || text || `HTTP ${res.status}`;

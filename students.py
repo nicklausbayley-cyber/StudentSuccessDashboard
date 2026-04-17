@@ -13,13 +13,16 @@ from readiness_rules import compute_readiness
 
 router = APIRouter()
 
+
 def _require_same_district(current_user, district_id: int):
     if current_user.district_id != district_id:
         raise HTTPException(status_code=403, detail="Cross-district access denied")
 
+
 def _require_admin(current_user):
     if current_user.role not in ("district_admin", "school_admin"):
         raise HTTPException(status_code=403, detail="Insufficient role")
+
 
 @router.get("")
 def list_students(
@@ -53,6 +56,59 @@ def list_students(
             "reasons": (r.reasons if r else None),
         })
     return out
+
+
+@router.get("/me")
+def get_my_student(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "student":
+        raise HTTPException(status_code=403, detail="Only student users can access this endpoint")
+
+    student = (
+        db.query(Student)
+        .filter(
+            Student.district_id == current_user.district_id,
+            Student.student_email == current_user.email,
+        )
+        .first()
+    )
+
+    if not student:
+        raise HTTPException(status_code=404, detail="No student record found for the signed-in user")
+
+    attendance = student.attendance
+    academic = student.academic
+    readiness = student.readiness
+
+    return {
+        "id": student.id,
+        "student_id": student.student_id,
+        "first_name": student.first_name,
+        "last_name": student.last_name,
+        "grade": student.grade,
+        "student_email": student.student_email,
+        "district_id": student.district_id,
+        "school_id": student.school_id,
+        "enrollment_status": student.enrollment_status,
+        "attendance": {
+            "days_enrolled": attendance.days_enrolled if attendance else None,
+            "days_absent": attendance.days_absent if attendance else None,
+            "attendance_rate": attendance.attendance_rate if attendance else None,
+        },
+        "academic": {
+            "credits_earned": academic.credits_earned if academic else None,
+            "credits_expected": academic.credits_expected if academic else None,
+            "growth_percentile": academic.growth_percentile if academic else None,
+        },
+        "readiness": {
+            "status": readiness.status if readiness else None,
+            "risk_score": readiness.risk_score if readiness else None,
+            "reasons": readiness.reasons if readiness else None,
+        },
+    }
+
 
 @router.post("/upload/roster")
 async def upload_roster(
@@ -105,6 +161,7 @@ async def upload_roster(
     db.commit()
     return {"created": created, "updated": updated}
 
+
 @router.post("/upload/attendance")
 async def upload_attendance(
     district_id: int,
@@ -138,6 +195,7 @@ async def upload_attendance(
 
     db.commit()
     return {"upserted": upserted, "skipped_unknown_students": skipped}
+
 
 @router.post("/upload/academics")
 async def upload_academics(
@@ -176,6 +234,7 @@ async def upload_academics(
     db.commit()
     return {"upserted": upserted, "skipped_unknown_students": skipped}
 
+
 @router.post("/recalculate")
 def recalculate(
     district_id: int,
@@ -189,9 +248,9 @@ def recalculate(
     updated = 0
     for s in students:
         ar = s.attendance.attendance_rate if s.attendance else None
-        gp = s.academics.growth_percentile if s.academics else None
-        ce = s.academics.credits_earned if s.academics else None
-        cx = s.academics.credits_expected if s.academics else None
+        gp = s.academic.growth_percentile if s.academic else None
+        ce = s.academic.credits_earned if s.academic else None
+        cx = s.academic.credits_expected if s.academic else None
         result = compute_readiness(ar, gp, ce, cx)
         if not s.readiness:
             s.readiness = StudentReadiness(student_id_fk=s.id)
