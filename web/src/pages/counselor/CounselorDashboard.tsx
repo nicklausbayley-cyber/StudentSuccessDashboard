@@ -6,14 +6,13 @@ import {
   Building2,
   Search,
   ChevronDown,
-SlidersHorizontal,
+  SlidersHorizontal,
   MoreHorizontal,
   AlertTriangle,
   ShieldAlert,
   ShieldCheck,
   Shield,
 } from "lucide-react";
-import DemoRoleSwitcher from "../../components/DemoRoleSwitcher";
 
 import {
   PieChart,
@@ -128,7 +127,6 @@ function KPI({ label, value, delta, sub }: KPIProps) {
   );
 }
 
-
 const RISK_META: Record<Risk, { tone: "rose" | "amber" | "emerald" | "slate"; icon: React.ReactNode }> = {
   "High Risk": { tone: "rose", icon: <ShieldAlert className="h-4 w-4" /> },
   "At Risk": { tone: "amber", icon: <AlertTriangle className="h-4 w-4" /> },
@@ -136,10 +134,16 @@ const RISK_META: Record<Risk, { tone: "rose" | "amber" | "emerald" | "slate"; ic
   "Low Risk": { tone: "emerald", icon: <ShieldCheck className="h-4 w-4" /> },
 };
 
+function TrendBadge({ pct }: { pct: number | null }) {
+  if (pct == null) {
+    return (
+      <span className="inline-flex items-center rounded-lg px-2 py-1 text-xs ring-1 bg-slate-50 text-slate-600 ring-slate-200/70">
+        No growth data
+      </span>
+    );
+  }
 
-
-function TrendBadge({ pct }: { pct: number }) {
-  const up = pct >= 0;
+  const up = pct >= 50;
   return (
     <span
       className={cx(
@@ -149,28 +153,54 @@ function TrendBadge({ pct }: { pct: number }) {
           : "bg-rose-50 text-rose-700 ring-rose-200/70"
       )}
     >
-      {up ? "↗" : "↘"} {Math.abs(pct)}%
+      {up ? "↗" : "↘"} GP {pct}
     </span>
   );
+}
+
+
+function gradeBandLabel(grade: number) {
+  if (grade <= 3) return "K–3 Foundations";
+  if (grade <= 6) return "Grades 4–6 Growth";
+  if (grade <= 8) return "Grades 7–8 Planning";
+  if (grade <= 10) return "Grades 9–10 On-Track";
+  return "Grades 11–12 Readiness";
+}
+
+function priorityIntervention(student: typeof DEMO_STUDENTS[number]) {
+  if (student.grade <= 3) return "Attendance + literacy support";
+  if (student.elFlag) return "EL progress monitoring";
+  if (student.grade >= 9 && student.ninthGradeOnTrack === false) return "Freshman credits recovery";
+  if (student.grade >= 11) return "College/career benchmark completion";
+  if (student.growthPercentile != null && student.growthPercentile < 50) return "Growth-focused academic support";
+  return "Maintain on-track progress";
+}
+
+function readinessLabel(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 export default function CounselorDashboard() {
   const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
+
   const [q, setQ] = useState("");
   const [riskFilter, setRiskFilter] = useState<Risk | "All">("All");
-  const [selected, setSelected] = useState<string>("Jordan Lee");
+  const [selected, setSelected] = useState<string>(DEMO_STUDENTS[0].name);
   const [gradeFilter, setGradeFilter] = useState<number | "All">("All");
-
-  
   const [homeFilter, setHomeFilter] = useState<string | "All">("All");
-const rows = useMemo(() => {
+
+  const rows = useMemo(() => {
     return DEMO_STUDENTS.filter((s) => {
       const matchQ =
         !q ||
         s.name.toLowerCase().includes(q.toLowerCase()) ||
         String(s.grade).includes(q) ||
-        s.homeroom.toLowerCase().includes(q.toLowerCase());
+        s.homeroom.toLowerCase().includes(q.toLowerCase()) ||
+        s.readinessStatus.toLowerCase().includes(q.toLowerCase());
 
       const matchRisk = riskFilter === "All" ? true : s.risk === riskFilter;
       const matchGrade = gradeFilter === "All" ? true : s.grade === gradeFilter;
@@ -196,34 +226,30 @@ const rows = useMemo(() => {
     }));
   }, []);
 
-  
   const kpis = useMemo(() => {
     const total = DEMO_STUDENTS.length || 1;
+    const avg = (nums: number[]) => nums.reduce((a, b) => a + b, 0) / (nums.length || 1);
 
-    const avg = (nums: number[]) => (nums.reduce((a, b) => a + b, 0) / (nums.length || 1));
     const attendanceAvg = avg(DEMO_STUDENTS.map((s) => s.attendance));
-    const newaAvg = avg(DEMO_STUDENTS.map((s) => s.newaMath));
-    const widaAvg = avg(DEMO_STUDENTS.map((s) => s.wida));
-
+    const growthAvg = avg(DEMO_STUDENTS.map((s) => s.growthPercentile ?? 0));
     const atRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk" || s.risk === "At Risk").length;
-    const highRiskCount = DEMO_STUDENTS.filter((s) => s.risk === "High Risk").length;
+    const hsOffTrack = DEMO_STUDENTS.filter((s) => s.grade >= 9 && s.ninthGradeOnTrack === false).length;
 
-    // Demo-friendly formatting
     return {
       attendance: `${attendanceAvg.toFixed(1)}%`,
-      newaMath: `${Math.round(newaAvg)}`,
-      wida: `${Math.round(widaAvg)}`,
+      growth: `${Math.round(growthAvg)}`,
       atRisk: `${atRiskCount}`,
-      highRisk: `${highRiskCount}`,
+      hsOffTrack: `${hsOffTrack}`,
       total: `${total}`,
     };
   }, []);
-const spark = [
-    { x: "W1", y: 380 },
-    { x: "W2", y: 395 },
-    { x: "W3", y: 402 },
-    { x: "W4", y: 410 },
-    { x: "W5", y: 412 },
+
+  const spark = [
+    { x: "W1", y: selectedRow.newaReading - 12 },
+    { x: "W2", y: selectedRow.newaReading - 8 },
+    { x: "W3", y: selectedRow.newaReading - 4 },
+    { x: "W4", y: selectedRow.newaReading - 2 },
+    { x: "W5", y: selectedRow.newaReading },
   ];
 
   const pieCells = {
@@ -235,105 +261,93 @@ const spark = [
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.06)_0%,_rgba(255,255,255,0)_55%),radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.08)_0%,_rgba(255,255,255,0)_45%)] bg-slate-50">
-      <DemoRoleSwitcher />
       <div className="mx-auto max-w-7xl px-6 py-6">
-        {/* Top bar */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              
-              <DemoRoleSwitcher />
-<div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
-                <Building2 className="h-5 w-5 text-slate-700" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+              <Building2 className="h-5 w-5 text-slate-700" />
+            </div>
+            <div>
+              <div className="text-xl font-semibold text-slate-900">
+                Student Achievement Dashboard
               </div>
-              <div>
-                <div className="text-xl font-semibold text-slate-900">
-                  Student Achievement Dashboard
-                </div>
-                <div className="text-sm text-slate-500">Wabash Demo District</div>
+              <div className="text-sm text-slate-500">Wabash Demo District</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {currentUser && (
+              <div className="hidden md:block rounded-2xl bg-white px-4 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-black/5">
+                <div className="font-semibold text-slate-800">{currentUser.email}</div>
+                <div>Role: {currentUser.role} • District: {currentUser.district_id}</div>
               </div>
+            )}
+            <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+              Demo Data
+            </div>
+            <button
+              className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 hover:bg-slate-50"
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+            >
+              Log out
+            </button>
+            <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur">
+                Grade
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur">
+                Homerooms
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur">
+                Indiana Grade Bands
+                <span className="text-slate-500">Demo</span>
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
 
-            <div className="flex items-center gap-3">
-              {currentUser && (
-                <div className="hidden md:block rounded-2xl bg-white px-4 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-black/5">
-                  <div className="font-semibold text-slate-800">{currentUser.email}</div>
-                  <div>Role: {currentUser.role} • District: {currentUser.district_id}</div>
-                </div>
-              )}
-              <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
-                Demo Data
-              </div>
-              <button
-                className="rounded-2xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 hover:bg-slate-50"
-                onClick={() => {
-                  logout();
-                  navigate("/login");
-                }}
-              >
-                Log out
-              </button>
-              <button className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
-                <ChevronDown className="h-4 w-4 text-slate-500" />
+            <div className="flex items-center gap-2">
+              <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur">
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-slate-600">
+                  <path d="M12 3v10m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Export
               </button>
             </div>
           </div>
 
-          {/* Filter bar */}
-        
-{/* Filters */}
-<div className="mt-6 flex flex-col gap-3">
-  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Dropdown pills */}
-      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
-        Grade
-        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-        </svg>
-      </button>
+          <div className="h-px w-full bg-slate-200/70" />
+        </div>
 
-      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
-        Homerooms
-        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-        </svg>
-      </button>
-
-      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
-        Test Window
-        <span className="text-slate-500">Winter 2026</span>
-        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-slate-500">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-        </svg>
-      </button>
-    </div>
-
-    {/* Export */}
-    <div className="flex items-center gap-2">
-      <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/80 px-4 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200">
-        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-slate-600">
-          <path d="M12 3v10m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-        Export
-      </button>
-    </div>
-  </div>
-
-  {/* subtle divider like the mock */}
-  <div className="h-px w-full bg-slate-200/70" />
-</div>
-{/* KPI row */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <KPI label="Attendance (avg)" value={kpis.attendance} sub={`Across ${kpis.total} students`} />
-  <KPI label="NEWA Math (avg)" value={kpis.newaMath} sub="Demo data derived from roster" />
-  <KPI label="At Risk" value={kpis.atRisk} sub={`High Risk: ${kpis.highRisk}`} />
-  <KPI label="WIDA (avg)" value={kpis.wida} sub="Demo composite score" />
-</div>
+          <KPI label="Attendance (avg)" value={kpis.attendance} sub={`Across ${kpis.total} demo students`} />
+          <KPI label="Growth Percentile (avg)" value={kpis.growth} sub="Indiana-aligned progress signal" />
+          <KPI label="At Risk" value={kpis.atRisk} sub="High Risk + At Risk students" />
+          <KPI label="HS Off Track" value={kpis.hsOffTrack} sub="Grades 9–12 milestone watch" />
+        </div>
 
-        {/* Main grid: table + right column */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left: table card */}
           <Card
             className="lg:col-span-2"
             title=""
@@ -343,7 +357,6 @@ const spark = [
               </button>
             }
           >
-{/* Controls row */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-1 items-center gap-2 rounded-2xl bg-white px-4 py-2 ring-1 ring-slate-200/70">
                 <Search className="h-4 w-4 text-slate-500" />
@@ -366,7 +379,6 @@ const spark = [
               </button>
             </div>
 
-            {/* Risk chips */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Chip active={riskFilter === "All"} onClick={() => setRiskFilter("All")} tone="slate">
                 All
@@ -385,88 +397,87 @@ const spark = [
               </Chip>
             </div>
 
-            {/* Table */}
-{/* Result count + clear */}
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-600">
-                  Showing <span className="font-semibold">{rows.length}</span>{" "}
-                  <span className="hidden sm:inline">students</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQ("");
-                    setRiskFilter("All");
-                    setGradeFilter("All");
-                    setHomeFilter("All");
-                  }}
-                  className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
-                >
-                  Clear filters
-                </button>
+            <div className="mb-2 mt-4 flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-600">
+                Showing <span className="font-semibold">{rows.length}</span> students
               </div>
-<div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
-              <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
+              <button
+                type="button"
+                onClick={() => {
+                  setQ("");
+                  setRiskFilter("All");
+                  setGradeFilter("All");
+                  setHomeFilter("All");
+                }}
+                className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 hover:bg-slate-50"
+              >
+                Clear filters
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-[520px] overflow-auto rounded-2xl ring-1 ring-slate-200/70">
+              <div className="sticky top-0 z-10 grid grid-cols-[1.6fr_0.5fr_0.9fr_0.8fr_0.9fr_1.1fr] bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
                 <div>Student</div>
                 <div>Grade</div>
                 <div>Homeroom</div>
-                <div>NEWA Math</div>
                 <div>Attendance</div>
-                <div>WIDA</div>
+                <div>Growth</div>
+                <div>Readiness</div>
               </div>
 
               <div className="divide-y divide-slate-200/70 bg-white">
                 {rows.length === 0 ? (
-                    <div className="px-4 py-12 text-center">
-                      <div className="text-base font-semibold text-slate-900">No students match your filters</div>
-                      <div className="mt-1 text-sm text-slate-600">
-                        Try adjusting Grade, Homeroom, Risk, or clearing the search.
-                      </div>
+                  <div className="px-4 py-12 text-center">
+                    <div className="text-base font-semibold text-slate-900">No students match your filters</div>
+                    <div className="mt-1 text-sm text-slate-600">
+                      Try adjusting Grade, Homeroom, Risk, or clearing the search.
                     </div>
-                  ) : (
-                    rows.map((s) => (
-                  <button
-                    key={s.name}
-                    onClick={() => setSelected(s.name)}
-                    className={cx(
-                      "grid w-full grid-cols-[1.6fr_0.5fr_0.7fr_0.9fr_0.8fr_0.7fr] items-center px-4 py-3 text-left text-sm transition-colors",
-                      selected === s.name ? "bg-slate-50" : "hover:bg-slate-50 hover:shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-slate-100 ring-1 ring-slate-200/70" />
-                      <div className="font-medium text-slate-900">{s.name}</div>
-                      <div className="hidden md:inline-flex">
-                        <span className={cx("ml-2 inline-flex items-center gap-2 rounded-xl px-2 py-1 text-xs ring-1",
-                          RISK_META[s.risk].tone === "rose"
-                            ? "bg-rose-50 text-rose-700 ring-rose-200/70"
-                            : RISK_META[s.risk].tone === "amber"
-                            ? "bg-amber-50 text-amber-800 ring-amber-200/70"
-                            : RISK_META[s.risk].tone === "emerald"
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200/70"
-                            : "bg-slate-50 text-slate-700 ring-slate-200/70"
-                        )}>
-                          {RISK_META[s.risk].icon} {s.risk}
+                  </div>
+                ) : (
+                  rows.map((s) => (
+                    <button
+                      key={s.name}
+                      onClick={() => setSelected(s.name)}
+                      className={cx(
+                        "grid w-full grid-cols-[1.6fr_0.5fr_0.9fr_0.8fr_0.9fr_1.1fr] items-center px-4 py-3 text-left text-sm transition-colors",
+                        selected === s.name ? "bg-slate-50" : "hover:bg-slate-50 hover:shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-slate-100 ring-1 ring-slate-200/70" />
+                        <div>
+                          <div className="font-medium text-slate-900">{s.name}</div>
+                          <div className="text-xs text-slate-500">{gradeBandLabel(s.grade)} • {s.counselorNote}</div>
+                        </div>
+                      </div>
+
+                      <div className="text-slate-700">{s.grade}</div>
+                      <div className="text-slate-700">{s.homeroom}</div>
+                      <div className="text-slate-700">{s.attendance}%</div>
+                      <div><TrendBadge pct={s.growthPercentile} /></div>
+                      <div>
+                        <span
+                          className={cx(
+                            "inline-flex items-center gap-2 rounded-xl px-2 py-1 text-xs ring-1",
+                            RISK_META[s.risk].tone === "rose"
+                              ? "bg-rose-50 text-rose-700 ring-rose-200/70"
+                              : RISK_META[s.risk].tone === "amber"
+                              ? "bg-amber-50 text-amber-800 ring-amber-200/70"
+                              : RISK_META[s.risk].tone === "emerald"
+                              ? "bg-emerald-50 text-emerald-700 ring-emerald-200/70"
+                              : "bg-slate-50 text-slate-700 ring-slate-200/70"
+                          )}
+                        >
+                          {RISK_META[s.risk].icon} {readinessLabel(s.readinessStatus)}
                         </span>
                       </div>
-                    </div>
-
-                    <div className="text-slate-700">{s.grade}</div>
-                    <div className="text-slate-700">{s.homeroom}</div>
-                    <div className="text-slate-900">{s.newaMath}</div>
-                    <div className="flex items-center justify-between gap-2 text-slate-700">
-                      <span>{s.attendance}%</span>
-                      <TrendBadge pct={s.attendance >= 80 ? 7 : -7} />
-                    </div>
-                    <div className="text-slate-700">{s.wida}</div>
-                  </button>
-                ))
-                  )}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </Card>
 
-          {/* Right column */}
           <div className="space-y-6">
             <Card title="Risk Distribution">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1">
@@ -510,7 +521,7 @@ const spark = [
                   <div>
                     <div className="font-semibold text-slate-900">{selectedRow.name}</div>
                     <div className="mt-0.5 text-sm text-slate-500">
-                      {selectedRow.grade}th • Homeroom {selectedRow.homeroom}
+                      Grade {selectedRow.grade} • {selectedRow.homeroom}
                     </div>
                   </div>
 
@@ -520,13 +531,19 @@ const spark = [
                 </div>
 
                 <div className="mt-4 text-sm font-medium text-slate-800">
-                  NEWA Reading Declined
+                  {priorityIntervention(selectedRow)}
+                </div>
+
+                <div className="mt-2 text-sm text-slate-600">
+                  {gradeBandLabel(selectedRow.grade)} • {selectedRow.counselorNote}
                 </div>
 
                 <div className="mt-3 flex items-end justify-between gap-3">
                   <div>
-                    <div className="text-3xl font-semibold text-slate-900">412</div>
-                    <div className="mt-1 text-sm text-emerald-700">↑ 5%</div>
+                    <div className="text-3xl font-semibold text-slate-900">
+                      {selectedRow.growthPercentile ?? "—"}
+                    </div>
+                    <div className="mt-1 text-sm text-emerald-700">Growth Percentile</div>
                   </div>
 
                   <div className="h-20 flex-1">
@@ -542,24 +559,16 @@ const spark = [
 
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                   <span className="rounded-lg bg-slate-50 px-2 py-1 ring-1 ring-slate-200/70">
-                    Percentile: 66%
+                    Attendance: {selectedRow.attendance}%
                   </span>
                   <span className="rounded-lg bg-slate-50 px-2 py-1 ring-1 ring-slate-200/70">
-                    55% percentile
+                    Days Absent: {selectedRow.daysAbsent}
                   </span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
-                    <div className="text-xs text-slate-600">WIDA</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">4.2</div>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
-                    <div className="text-xs text-slate-600">Risk Level</div>
-                    <div className="mt-1 text-sm font-medium text-slate-800">
-                      {selectedRow.risk}
-                    </div>
-                  </div>
+                  {selectedRow.elFlag && (
+                    <span className="rounded-lg bg-slate-50 px-2 py-1 ring-1 ring-slate-200/70">
+                      WIDA: {selectedRow.wida}
+                    </span>
+                  )}
                 </div>
 
                 <button className="mt-4 flex w-full items-center justify-between rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/70">
@@ -570,7 +579,6 @@ const spark = [
           </div>
         </div>
 
-        {/* Student detail section */}
         <div className="mt-6 rounded-2xl bg-white/70 ring-1 ring-black/5">
           <div className="px-6 pt-6 text-lg font-semibold text-slate-900">Student Detail</div>
           <div className="mt-3 flex flex-wrap gap-4 border-b border-slate-200/70 px-6 pb-3 text-sm text-slate-600">
@@ -588,11 +596,11 @@ const spark = [
                   <div>
                     <div className="font-semibold text-slate-900">{selectedRow.name}</div>
                     <div className="text-sm text-slate-500">
-                      Grade {selectedRow.grade} • Homeroom {selectedRow.homeroom}
+                      Grade {selectedRow.grade} • {selectedRow.homeroom}
                     </div>
                   </div>
                 </div>
-                <Chip tone="slate">{selectedRow.risk}</Chip>
+                <Chip tone={RISK_META[selectedRow.risk].tone}>{selectedRow.risk}</Chip>
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -601,19 +609,33 @@ const spark = [
                   <div className="mt-1 text-2xl font-semibold text-slate-900">
                     {selectedRow.attendance}%
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">12 missed days</div>
+                  <div className="mt-1 text-xs text-slate-500">{selectedRow.daysAbsent} missed days</div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                  <div className="text-xs text-slate-600">Reading</div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-900">208</div>
-                  <div className="mt-1 text-xs text-slate-500">55th percentile</div>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
-                  <div className="text-xs text-slate-600">Math</div>
+                  <div className="text-xs text-slate-600">Growth Percentile</div>
                   <div className="mt-1 text-2xl font-semibold text-slate-900">
-                    {selectedRow.newaMath}
+                    {selectedRow.growthPercentile ?? "—"}
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">72nd percentile</div>
+                  <div className="mt-1 text-xs text-slate-500">Indiana growth view</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
+                  <div className="text-xs text-slate-600">
+                    {selectedRow.grade >= 9 ? "Credits Earned" : selectedRow.elFlag ? "WIDA" : "ILEARN ELA"}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-900">
+                    {selectedRow.grade >= 9
+                      ? (selectedRow.creditsEarned ?? "—")
+                      : selectedRow.elFlag
+                      ? (selectedRow.wida ?? "—")
+                      : selectedRow.iLearn.ela}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {selectedRow.grade >= 9
+                      ? `Expected: ${selectedRow.creditsExpected ?? "—"}`
+                      : selectedRow.elFlag
+                      ? (selectedRow.widaGoalMet ? "WIDA goal met" : "WIDA goal not yet met")
+                      : "Latest available benchmark"}
+                  </div>
                 </div>
               </div>
 
@@ -632,30 +654,53 @@ const spark = [
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
                   <span className="mt-0.5">☑️</span>
-                  <div>Meet with {selectedRow.name.split(" ")[0]} to discuss: the data</div>
+                  <div>{selectedRow.counselorNote}</div>
                 </div>
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                  <span className="mt-0.5">☑️</span>
-                  <div>Recommend daily reading practice</div>
-                </div>
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                  <span className="mt-0.5">☑️</span>
-                  <div>Provide reading support resources</div>
-                </div>
+
+                {selectedRow.attendance < 90 && (
+                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                    <span className="mt-0.5">☑️</span>
+                    <div>Schedule an attendance intervention check-in.</div>
+                  </div>
+                )}
+
+                {selectedRow.growthPercentile != null && selectedRow.growthPercentile < 40 && (
+                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                    <span className="mt-0.5">☑️</span>
+                    <div>Provide targeted academic support for weak growth.</div>
+                  </div>
+                )}
+
+                {selectedRow.elFlag && selectedRow.widaGoalMet === false && (
+                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                    <span className="mt-0.5">☑️</span>
+                    <div>Review language-growth supports and EL goals.</div>
+                  </div>
+                )}
+
+                {selectedRow.grade >= 9 && selectedRow.ninthGradeOnTrack === false && (
+                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                    <span className="mt-0.5">☑️</span>
+                    <div>Meet about credits and 9th-grade-on-track recovery plan.</div>
+                  </div>
+                )}
 
                 <div className="mt-4 rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-slate-900">Alerts</div>
+                    <div className="font-semibold text-slate-900">Key Accountability Signals</div>
                     <div className="flex items-center gap-2">
-                      <Chip tone="rose">High Risk</Chip>
-                      <Chip tone="slate">On Watch</Chip>
+                      <Chip tone={RISK_META[selectedRow.risk].tone}>{selectedRow.risk}</Chip>
                     </div>
                   </div>
                   <div className="mt-3 text-slate-700">
-                    • NEWA Reading Declined
+                    • {priorityIntervention(selectedRow)}
                   </div>
                   <div className="mt-1 text-slate-500 text-xs">
-                    Review trend and consider intervention plan.
+                    {selectedRow.grade <= 3 && "K–3 focus: literacy/math foundations and attendance."}
+                    {selectedRow.grade >= 4 && selectedRow.grade <= 6 && "Grades 4–6 focus: growth, attendance, and EL progress where applicable."}
+                    {selectedRow.grade >= 7 && selectedRow.grade <= 8 && "Grades 7–8 focus: growth, attendance, and planning milestones."}
+                    {selectedRow.grade >= 9 && selectedRow.grade <= 10 && "Grades 9–10 focus: credits, on-track, and coursework milestones."}
+                    {selectedRow.grade >= 11 && "Grades 11–12 focus: diploma, credentials, coursework, and college/career readiness."}
                   </div>
                 </div>
               </div>
