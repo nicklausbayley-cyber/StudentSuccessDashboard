@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { DEMO_STUDENTS, type Risk } from "../../demo/demoData";
+import { FlagReasonsCard, InterventionStatusCard, ParentOutreachCard } from "../../components/phase1";
 import {
   Building2,
   Search,
@@ -650,61 +651,78 @@ export default function CounselorDashboard() {
               </div>
             </Card>
 
-            <Card title="Suggested Steps">
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                  <span className="mt-0.5">☑️</span>
-                  <div>{selectedRow.counselorNote}</div>
-                </div>
-
-                {selectedRow.attendance < 90 && (
+            <div className="space-y-4">
+              <Card title="Suggested Steps">
+                <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
                     <span className="mt-0.5">☑️</span>
-                    <div>Schedule an attendance intervention check-in.</div>
+                    <div>{selectedRow.counselorNote}</div>
                   </div>
-                )}
 
-                {selectedRow.growthPercentile != null && selectedRow.growthPercentile < 40 && (
-                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                    <span className="mt-0.5">☑️</span>
-                    <div>Provide targeted academic support for weak growth.</div>
-                  </div>
-                )}
+                  {selectedRow.attendance < 90 && (
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                      <span className="mt-0.5">☑️</span>
+                      <div>Schedule an attendance intervention check-in.</div>
+                    </div>
+                  )}
 
-                {selectedRow.elFlag && selectedRow.widaGoalMet === false && (
-                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                    <span className="mt-0.5">☑️</span>
-                    <div>Review language-growth supports and EL goals.</div>
-                  </div>
-                )}
+                  {selectedRow.growthPercentile != null && selectedRow.growthPercentile < 40 && (
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                      <span className="mt-0.5">☑️</span>
+                      <div>Provide targeted academic support for weak growth.</div>
+                    </div>
+                  )}
 
-                {selectedRow.grade >= 9 && selectedRow.ninthGradeOnTrack === false && (
-                  <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
-                    <span className="mt-0.5">☑️</span>
-                    <div>Meet about credits and 9th-grade-on-track recovery plan.</div>
-                  </div>
-                )}
+                  {selectedRow.elFlag && selectedRow.widaGoalMet === false && (
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                      <span className="mt-0.5">☑️</span>
+                      <div>Review language-growth supports and EL goals.</div>
+                    </div>
+                  )}
 
-                <div className="mt-4 rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold text-slate-900">Key Accountability Signals</div>
-                    <div className="flex items-center gap-2">
-                      <Chip tone={RISK_META[selectedRow.risk].tone}>{selectedRow.risk}</Chip>
+                  {selectedRow.grade >= 9 && selectedRow.ninthGradeOnTrack === false && (
+                    <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
+                      <span className="mt-0.5">☑️</span>
+                      <div>Meet about credits and 9th-grade-on-track recovery plan.</div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-slate-900">Key Accountability Signals</div>
+                      <div className="flex items-center gap-2">
+                        <Chip tone={RISK_META[selectedRow.risk].tone}>{selectedRow.risk}</Chip>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-slate-700">
+                      • {priorityIntervention(selectedRow)}
+                    </div>
+                    <div className="mt-1 text-slate-500 text-xs">
+                      {selectedRow.grade <= 3 && "K–3 focus: literacy/math foundations and attendance."}
+                      {selectedRow.grade >= 4 && selectedRow.grade <= 6 && "Grades 4–6 focus: growth, attendance, and EL progress where applicable."}
+                      {selectedRow.grade >= 7 && selectedRow.grade <= 8 && "Grades 7–8 focus: growth, attendance, and planning milestones."}
+                      {selectedRow.grade >= 9 && selectedRow.grade <= 10 && "Grades 9–10 focus: credits, on-track, and coursework milestones."}
+                      {selectedRow.grade >= 11 && "Grades 11–12 focus: diploma, credentials, coursework, and college/career readiness."}
                     </div>
                   </div>
-                  <div className="mt-3 text-slate-700">
-                    • {priorityIntervention(selectedRow)}
-                  </div>
-                  <div className="mt-1 text-slate-500 text-xs">
-                    {selectedRow.grade <= 3 && "K–3 focus: literacy/math foundations and attendance."}
-                    {selectedRow.grade >= 4 && selectedRow.grade <= 6 && "Grades 4–6 focus: growth, attendance, and EL progress where applicable."}
-                    {selectedRow.grade >= 7 && selectedRow.grade <= 8 && "Grades 7–8 focus: growth, attendance, and planning milestones."}
-                    {selectedRow.grade >= 9 && selectedRow.grade <= 10 && "Grades 9–10 focus: credits, on-track, and coursework milestones."}
-                    {selectedRow.grade >= 11 && "Grades 11–12 focus: diploma, credentials, coursework, and college/career readiness."}
-                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+
+              <FlagReasonsCard flagReasons={selectedRow.flagReasons} risk={selectedRow.risk} />
+
+              <InterventionStatusCard
+                interventionStatus={selectedRow.interventionStatus}
+                interventionOwner={selectedRow.interventionOwner}
+                followUpDueDate={selectedRow.followUpDueDate}
+              />
+
+              <ParentOutreachCard
+                parentOutreachNeeded={selectedRow.parentOutreachNeeded}
+                parentContacted={selectedRow.parentContacted}
+                followUpDueDate={selectedRow.followUpDueDate}
+                contactNotes={selectedRow.contactNotes}
+              />
+            </div>
           </div>
         </div>
       </div>
