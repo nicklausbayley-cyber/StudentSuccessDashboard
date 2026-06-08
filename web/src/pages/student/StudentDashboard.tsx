@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { apiFetch } from "../../lib/api";
 import { DEMO_STUDENTS, getDefaultStudent, getStudentByName, type StudentRow } from "../../demo/demoData";
+import { StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
 import {
   Home,
   Search,
@@ -443,6 +444,22 @@ export default function StudentDashboard() {
 
         <div className="mt-3 text-sm text-slate-500">
           Demo story currently selected: <span className="font-semibold text-slate-700">{demoStudent.name}</span>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <WeeklyGoalCard
+            teacherWeeklyGoal={demoStudent.teacherWeeklyGoal}
+            studentWeeklyGoal={demoStudent.studentWeeklyGoal}
+            weeklyGoalStatus={demoStudent.weeklyGoalStatus}
+            starsEarnedThisWeek={demoStudent.starsEarnedThisWeek}
+            encouragementMessage={demoStudent.encouragementMessage}
+          />
+
+          <StarsRewardsCard
+            starsEarnedThisWeek={demoStudent.starsEarnedThisWeek}
+            attendanceStreak={demoStudent.attendanceStreak}
+            rewardBadge={demoStudent.rewardBadge}
+          />
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
