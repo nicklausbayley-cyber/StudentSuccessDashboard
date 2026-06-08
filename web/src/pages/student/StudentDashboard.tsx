@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { apiFetch } from "../../lib/api";
 import { DEMO_STUDENTS, getDefaultStudent, getStudentByName, type StudentRow } from "../../demo/demoData";
-import { StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
+import { HighSchoolReadinessCard, StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
 import {
   Home,
   Search,
@@ -597,6 +597,20 @@ export default function StudentDashboard() {
               {readinessReason}
             </div>
           </Card>
+        </div>
+
+        <div className="mt-6">
+          <HighSchoolReadinessCard
+            grade={demoStudent.grade}
+            creditsEarned={demoStudent.creditsEarned}
+            creditsExpected={demoStudent.creditsExpected}
+            creditsNeeded={demoStudent.creditsNeeded}
+            graduationPlanComplete={demoStudent.graduationPlanComplete}
+            ninthGradeOnTrack={demoStudent.ninthGradeOnTrack}
+            graduationMilestones={demoStudent.graduationMilestones}
+            nextReadinessStep={demoStudent.nextReadinessStep}
+            portfolioPreview={demoStudent.portfolioPreview}
+          />
         </div>
 
         <div className="mt-6">
