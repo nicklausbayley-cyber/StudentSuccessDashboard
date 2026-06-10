@@ -1,6 +1,21 @@
+import { useState } from "react";
 import { CalendarCheck, CheckCircle2, LogOut, Medal, Sparkles, Star, Target, Trophy, User2 } from "lucide-react";
 import type { NavigateFunction } from "react-router-dom";
 import { DEMO_STUDENTS, type StudentRow } from "../../demo/demoData";
+
+type BubbleKey = "attendance" | "reading" | "math";
+type BubbleTone = "emerald" | "sky" | "amber";
+
+type BubbleDetail = {
+  key: BubbleKey;
+  label: string;
+  value: string;
+  percent: number;
+  tone: BubbleTone;
+  explanation: string;
+  encouragement: string;
+  nextStep: string;
+};
 
 type K4CurrentUser = {
   email: string;
@@ -38,29 +53,38 @@ function statusClass(status: StudentRow["weeklyGoalStatus"]) {
 }
 
 function BubbleProgress({
+  id,
   label,
   value,
   percent,
   tone,
+  selected,
+  onSelect,
 }: {
+  id: BubbleKey;
   label: string;
   value: string;
   percent: number;
-  tone: "emerald" | "sky" | "amber";
+  tone: BubbleTone;
+  selected: boolean;
+  onSelect: (id: BubbleKey) => void;
 }) {
   const tones = {
     emerald: {
       wrap: "bg-emerald-50 ring-emerald-200/70",
+      selected: "ring-emerald-400 shadow-md shadow-emerald-100",
       bubble: "bg-emerald-400/80",
       text: "text-emerald-700",
     },
     sky: {
       wrap: "bg-sky-50 ring-sky-200/70",
+      selected: "ring-sky-400 shadow-md shadow-sky-100",
       bubble: "bg-sky-400/80",
       text: "text-sky-700",
     },
     amber: {
       wrap: "bg-amber-50 ring-amber-200/70",
+      selected: "ring-amber-400 shadow-md shadow-amber-100",
       bubble: "bg-amber-400/80",
       text: "text-amber-700",
     },
@@ -69,18 +93,32 @@ function BubbleProgress({
   const size = 58 + clampPercent(percent) * 0.52;
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl p-5 shadow-sm ring-1 ${tones.wrap}`}>
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onSelect(id)}
+      className={`relative overflow-hidden rounded-3xl p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${tones.wrap} ${
+        selected ? tones.selected : ""
+      }`}
+    >
       <div className="relative z-10">
-        <div className="text-sm font-semibold text-slate-700">{label}</div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-slate-700">{label}</div>
+          {selected ? (
+            <span className="rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-black/5">
+              Selected
+            </span>
+          ) : null}
+        </div>
         <div className={`mt-2 text-3xl font-semibold ${tones.text}`}>{value}</div>
-        <div className="mt-1 text-xs font-medium text-slate-500">{clampPercent(percent)}% bubble power</div>
+        <div className="mt-1 text-xs font-medium text-slate-500">Tap to explore</div>
       </div>
       <div
         className={`absolute -bottom-8 -right-6 rounded-full opacity-70 ${tones.bubble}`}
         style={{ height: `${size}px`, width: `${size}px` }}
       />
       <div className="absolute right-7 top-7 h-5 w-5 rounded-full bg-white/70" />
-    </div>
+    </button>
   );
 }
 
@@ -92,6 +130,8 @@ export default function K4StudentDashboard({
   onChangeStudent,
   demoStudentName,
 }: K4StudentDashboardProps) {
+  const [selectedBubble, setSelectedBubble] = useState<BubbleKey>("attendance");
+
   const firstName = demoStudent.name.split(" ")[0];
   const attendancePercent = clampPercent(demoStudent.attendance);
   const readingPercent = scoreToBubblePercent(demoStudent.newaReading);
@@ -105,6 +145,44 @@ export default function K4StudentDashboard({
       ? "Keep your attendance streak going today."
       : "Start the day strong and add to your attendance streak.",
   ];
+
+  const bubbleDetails: Record<BubbleKey, BubbleDetail> = {
+    attendance: {
+      key: "attendance",
+      label: "Attendance",
+      value: `${demoStudent.attendance.toFixed(1)}%`,
+      percent: attendancePercent,
+      tone: "emerald",
+      explanation: "You are building a strong school streak. Keep showing up each day.",
+      encouragement: `${demoStudent.attendanceStreak} days in a row is something to be proud of.`,
+      nextStep: "Be ready for tomorrow morning and keep your streak alive.",
+    },
+    reading: {
+      key: "reading",
+      label: "Reading",
+      value: String(demoStudent.newaReading),
+      percent: readingPercent,
+      tone: "sky",
+      explanation: "Reading practice helps unlock new levels.",
+      encouragement: "Every page and every new word helps your brain grow stronger.",
+      nextStep: "Read for 15 minutes and tell someone one thing you learned.",
+    },
+    math: {
+      key: "math",
+      label: "Math",
+      value: String(demoStudent.newaMath),
+      percent: mathPercent,
+      tone: "amber",
+      explanation: "Math growth happens one skill at a time.",
+      encouragement: "Mistakes are part of learning a new strategy.",
+      nextStep: "Try one practice problem and explain how you solved it.",
+    },
+  };
+
+  const selectedDetail = bubbleDetails[selectedBubble];
+  const rewardMessage = goalComplete
+    ? "Big celebration: your weekly goal is complete. You earned a proud moment."
+    : "Keep going: each star, streak day, and practice step moves you closer to your weekly goal.";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.16),_transparent_36%)] bg-slate-50">
@@ -247,23 +325,84 @@ export default function K4StudentDashboard({
 
         <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <BubbleProgress
+            id="attendance"
             label="Attendance"
-            value={`${demoStudent.attendance.toFixed(1)}%`}
-            percent={attendancePercent}
-            tone="emerald"
+            value={bubbleDetails.attendance.value}
+            percent={bubbleDetails.attendance.percent}
+            tone={bubbleDetails.attendance.tone}
+            selected={selectedBubble === "attendance"}
+            onSelect={setSelectedBubble}
           />
           <BubbleProgress
+            id="reading"
             label="Reading"
-            value={String(demoStudent.newaReading)}
-            percent={readingPercent}
-            tone="sky"
+            value={bubbleDetails.reading.value}
+            percent={bubbleDetails.reading.percent}
+            tone={bubbleDetails.reading.tone}
+            selected={selectedBubble === "reading"}
+            onSelect={setSelectedBubble}
           />
           <BubbleProgress
+            id="math"
             label="Math"
-            value={String(demoStudent.newaMath)}
-            percent={mathPercent}
-            tone="amber"
+            value={bubbleDetails.math.value}
+            percent={bubbleDetails.math.percent}
+            tone={bubbleDetails.math.tone}
+            selected={selectedBubble === "math"}
+            onSelect={setSelectedBubble}
           />
+        </section>
+
+        <section className="mt-4 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-500">Selected area</div>
+              <h2 className="mt-1 text-2xl font-semibold text-slate-900">{selectedDetail.label}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{selectedDetail.explanation}</p>
+            </div>
+            <div className="rounded-3xl bg-slate-50 px-5 py-4 text-center ring-1 ring-slate-200/70">
+              <div className="text-xs font-semibold text-slate-500">Current value</div>
+              <div className="mt-1 text-3xl font-semibold text-slate-900">{selectedDetail.value}</div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="rounded-3xl bg-emerald-50/80 p-4 ring-1 ring-emerald-200/70">
+              <div className="text-xs font-semibold text-emerald-700">Encouragement</div>
+              <div className="mt-2 text-sm font-semibold leading-6 text-slate-800">{selectedDetail.encouragement}</div>
+            </div>
+            <div className="rounded-3xl bg-sky-50/80 p-4 ring-1 ring-sky-200/70">
+              <div className="text-xs font-semibold text-sky-700">Next step</div>
+              <div className="mt-2 text-sm font-semibold leading-6 text-slate-800">{selectedDetail.nextStep}</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 ring-1 ring-amber-200/70">
+                <Trophy className="h-4 w-4" />
+                Reward check
+              </div>
+              <h2 className="mt-4 text-2xl font-semibold text-slate-900">
+                {goalComplete ? "Celebrate your goal win!" : "Keep collecting progress"}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{rewardMessage}</p>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{demoStudent.encouragementMessage}</p>
+            </div>
+
+            <div className="grid min-w-64 gap-3">
+              <div className="rounded-3xl bg-emerald-50/80 p-4 ring-1 ring-emerald-200/70">
+                <div className="text-xs font-semibold text-emerald-700">Stars earned</div>
+                <div className="mt-1 text-3xl font-semibold text-slate-900">{demoStudent.starsEarnedThisWeek}</div>
+              </div>
+              <div className="rounded-3xl bg-slate-50/90 p-4 ring-1 ring-slate-200/70">
+                <div className="text-xs font-semibold text-slate-500">Badge</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{demoStudent.rewardBadge ?? "Keep going"}</div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
