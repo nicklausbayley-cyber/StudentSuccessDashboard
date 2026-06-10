@@ -4,6 +4,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { apiFetch } from "../../lib/api";
 import { DEMO_STUDENTS, getDefaultStudent, getStudentByName, type StudentRow } from "../../demo/demoData";
 import { HighSchoolReadinessCard, StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
+import K4StudentDashboard from "./K4StudentDashboard";
 import {
   Home,
   Search,
@@ -336,6 +337,19 @@ export default function StudentDashboard() {
   }, []);
 
   const demoStudent = useMemo(() => getStudentByName(demoStudentName), [demoStudentName]);
+
+  if (demoStudent.grade <= 4) {
+    return (
+      <K4StudentDashboard
+        demoStudent={demoStudent}
+        currentUser={currentUser}
+        logout={logout}
+        navigate={navigate}
+        onChangeStudent={setDemoStudentName}
+        demoStudentName={demoStudentName}
+      />
+    );
+  }
 
   const studentName = `${demoStudent.name.split(" ")[0]}!`;
   const gradeLabel = String(demoStudent.grade);
