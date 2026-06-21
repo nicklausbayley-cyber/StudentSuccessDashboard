@@ -5,6 +5,7 @@ import { apiFetch } from "../../lib/api";
 import { DEMO_STUDENTS, getDefaultStudent, getStudentByName, type StudentRow } from "../../demo/demoData";
 import { HighSchoolReadinessCard, StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
 import K4StudentDashboard from "./K4StudentDashboard";
+import MiddleGradesStudentDashboard from "./MiddleGradesStudentDashboard";
 import {
   Home,
   Search,
@@ -341,6 +342,19 @@ export default function StudentDashboard() {
   if (demoStudent.grade <= 4) {
     return (
       <K4StudentDashboard
+        demoStudent={demoStudent}
+        currentUser={currentUser}
+        logout={logout}
+        navigate={navigate}
+        onChangeStudent={setDemoStudentName}
+        demoStudentName={demoStudentName}
+      />
+    );
+  }
+
+  if (demoStudent.grade >= 5 && demoStudent.grade <= 8) {
+    return (
+      <MiddleGradesStudentDashboard
         demoStudent={demoStudent}
         currentUser={currentUser}
         logout={logout}
