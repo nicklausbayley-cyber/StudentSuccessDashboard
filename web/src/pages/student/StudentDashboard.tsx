@@ -4,6 +4,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { apiFetch } from "../../lib/api";
 import { DEMO_STUDENTS, getDefaultStudent, getStudentByName, type StudentRow } from "../../demo/demoData";
 import { HighSchoolReadinessCard, StarsRewardsCard, WeeklyGoalCard } from "../../components/phase1";
+import HighSchoolStudentDashboard from "./HighSchoolStudentDashboard";
 import K4StudentDashboard from "./K4StudentDashboard";
 import MiddleGradesStudentDashboard from "./MiddleGradesStudentDashboard";
 import {
@@ -355,6 +356,19 @@ export default function StudentDashboard() {
   if (demoStudent.grade >= 5 && demoStudent.grade <= 8) {
     return (
       <MiddleGradesStudentDashboard
+        demoStudent={demoStudent}
+        currentUser={currentUser}
+        logout={logout}
+        navigate={navigate}
+        onChangeStudent={setDemoStudentName}
+        demoStudentName={demoStudentName}
+      />
+    );
+  }
+
+  if (demoStudent.grade >= 9) {
+    return (
+      <HighSchoolStudentDashboard
         demoStudent={demoStudent}
         currentUser={currentUser}
         logout={logout}
