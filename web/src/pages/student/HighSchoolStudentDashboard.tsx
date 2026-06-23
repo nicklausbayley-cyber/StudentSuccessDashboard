@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   BarChart3,
@@ -35,6 +35,30 @@ type HighSchoolStudentDashboardProps = {
 };
 
 type Tone = "emerald" | "sky" | "amber" | "rose" | "indigo" | "slate";
+
+type ReadinessKey =
+  | "attendance"
+  | "credits"
+  | "onTrack"
+  | "testing"
+  | "graduationPlan"
+  | "portfolio"
+  | "nextStep";
+
+type ReadinessDetail = {
+  label: string;
+  currentValue: string;
+  explanation: string;
+  whyItMatters: string;
+  nextAction: string;
+};
+
+type ChecklistItemData = {
+  label: string;
+  detail: string;
+  complete: boolean;
+  readinessKey: ReadinessKey;
+};
 
 function clampPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -113,17 +137,22 @@ function MetricCard({
   value,
   note,
   tone,
+  readinessKey,
+  selected = false,
+  onSelect,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   note: string;
   tone: Tone;
+  readinessKey?: ReadinessKey;
+  selected?: boolean;
+  onSelect?: (readinessKey: ReadinessKey) => void;
 }) {
   const classes = toneClasses(tone);
-
-  return (
-    <div className={`rounded-3xl p-5 shadow-sm ring-1 ${classes.wrap}`}>
+  const content = (
+    <>
       <div className="flex items-center gap-3">
         <div className={`grid h-11 w-11 place-items-center rounded-2xl ring-1 ${classes.icon}`}>{icon}</div>
         <div>
@@ -132,6 +161,27 @@ function MetricCard({
         </div>
       </div>
       <p className="mt-4 text-sm leading-6 text-slate-600">{note}</p>
+    </>
+  );
+
+  if (readinessKey && onSelect) {
+    return (
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => onSelect(readinessKey)}
+        className={`rounded-3xl p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${classes.wrap} ${
+          selected ? "ring-2 ring-indigo-300 shadow-md" : ""
+        }`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`rounded-3xl p-5 shadow-sm ring-1 ${classes.wrap}`}>
+      {content}
     </div>
   );
 }
@@ -142,17 +192,22 @@ function ProgressMetric({
   percent,
   tone,
   note,
+  readinessKey,
+  selected = false,
+  onSelect,
 }: {
   label: string;
   value: string;
   percent: number;
   tone: Tone;
   note: string;
+  readinessKey?: ReadinessKey;
+  selected?: boolean;
+  onSelect?: (readinessKey: ReadinessKey) => void;
 }) {
   const classes = toneClasses(tone);
-
-  return (
-    <div className="rounded-2xl bg-white/80 p-4 ring-1 ring-slate-200/70">
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-slate-700">{label}</div>
@@ -163,6 +218,27 @@ function ProgressMetric({
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
         <div className={`h-full rounded-full ${classes.bar}`} style={{ width: `${clampPercent(percent)}%` }} />
       </div>
+    </>
+  );
+
+  if (readinessKey && onSelect) {
+    return (
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => onSelect(readinessKey)}
+        className={`rounded-2xl bg-white/80 p-4 text-left ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
+          selected ? "ring-2 ring-indigo-300 shadow-sm" : ""
+        }`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-white/80 p-4 ring-1 ring-slate-200/70">
+      {content}
     </div>
   );
 }
@@ -171,13 +247,19 @@ function ChecklistItem({
   label,
   detail,
   complete,
+  readinessKey,
+  selected = false,
+  onSelect,
 }: {
   label: string;
   detail: string;
   complete: boolean;
+  readinessKey?: ReadinessKey;
+  selected?: boolean;
+  onSelect?: (readinessKey: ReadinessKey) => void;
 }) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl bg-white/75 p-4 ring-1 ring-slate-200/70">
+  const content = (
+    <>
       <div
         className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl ring-1 ${
           complete
@@ -191,6 +273,27 @@ function ChecklistItem({
         <div className="text-sm font-semibold text-slate-900">{label}</div>
         <div className="mt-1 text-sm leading-6 text-slate-600">{detail}</div>
       </div>
+    </>
+  );
+
+  if (readinessKey && onSelect) {
+    return (
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => onSelect(readinessKey)}
+        className={`flex items-start gap-3 rounded-2xl bg-white/75 p-4 text-left ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
+          selected ? "ring-2 ring-indigo-300 shadow-sm" : ""
+        }`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-3 rounded-2xl bg-white/75 p-4 ring-1 ring-slate-200/70">
+      {content}
     </div>
   );
 }
@@ -211,6 +314,35 @@ function PortfolioColumn({ title, items }: { title: string; items: string[] }) {
         )}
       </div>
     </div>
+  );
+}
+
+function DetailPanel({ detail }: { detail: ReadinessDetail }) {
+  return (
+    <section className="mt-5 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-slate-500">Selected readiness area</div>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-900">{detail.label}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{detail.explanation}</p>
+        </div>
+        <div className="rounded-3xl bg-slate-50 px-5 py-4 ring-1 ring-slate-200/70 lg:min-w-64">
+          <div className="text-xs font-semibold text-slate-500">Current status</div>
+          <div className="mt-1 text-xl font-semibold text-slate-900">{detail.currentValue}</div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="rounded-3xl bg-indigo-50/80 p-5 ring-1 ring-indigo-200/70">
+          <div className="text-xs font-semibold text-indigo-700">Why it matters</div>
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-800">{detail.whyItMatters}</p>
+        </div>
+        <div className="rounded-3xl bg-emerald-50/80 p-5 ring-1 ring-emerald-200/70">
+          <div className="text-xs font-semibold text-emerald-700">Next best action</div>
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-800">{detail.nextAction}</p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -237,18 +369,25 @@ export default function HighSchoolStudentDashboard({
     : "Keep freshman progress visible with credits, attendance, and recovery steps in one place.";
   const nextReadinessStep =
     demoStudent.nextReadinessStep ?? "Meet with your counselor to confirm the next readiness milestone.";
+  const [selectedReadiness, setSelectedReadiness] = useState<ReadinessKey>(isSenior ? "portfolio" : "onTrack");
 
-  const checklistItems = isSenior
+  useEffect(() => {
+    setSelectedReadiness(isSenior ? "portfolio" : "onTrack");
+  }, [demoStudent.id, isSenior]);
+
+  const checklistItems: ChecklistItemData[] = isSenior
     ? [
         {
           label: "Graduation plan",
           detail: graduationPlanLabel(demoStudent.graduationPlanComplete),
           complete: demoStudent.graduationPlanComplete === true,
+          readinessKey: "graduationPlan",
         },
         {
           label: "Senior credit check",
           detail: creditsNeeded > 0 ? `${creditsNeeded} credits still need confirmation.` : "Credits are on pace.",
           complete: creditsNeeded === 0,
+          readinessKey: "credits",
         },
         {
           label: "Credential or benchmark evidence",
@@ -256,6 +395,7 @@ export default function HighSchoolStudentDashboard({
             ? "Credential evidence still needs to be uploaded."
             : "Evidence is ready for review.",
           complete: !demoStudent.flagReasons.includes("Credential evidence incomplete"),
+          readinessKey: "portfolio",
         },
         {
           label: "Portfolio review",
@@ -263,6 +403,7 @@ export default function HighSchoolStudentDashboard({
             ? "Portfolio review is still pending."
             : "Portfolio milestone is ready.",
           complete: !demoStudent.graduationMilestones.includes("Portfolio review pending"),
+          readinessKey: "portfolio",
         },
       ]
     : [
@@ -270,25 +411,109 @@ export default function HighSchoolStudentDashboard({
           label: "9th Grade On Track",
           detail: onTrackLabel(demoStudent.ninthGradeOnTrack),
           complete: demoStudent.ninthGradeOnTrack === true,
+          readinessKey: "onTrack",
         },
         {
           label: "Credits earned vs expected",
           detail: `${creditsEarned} earned of ${creditsExpected || "expected credits pending"}`,
           complete: creditsExpected > 0 && creditsEarned >= creditsExpected,
+          readinessKey: "credits",
         },
         {
           label: "Credit recovery",
           detail: creditsNeeded > 0 ? `${creditsNeeded} credits need recovery or confirmation.` : "No credit gap showing.",
           complete: creditsNeeded === 0,
+          readinessKey: "credits",
         },
         {
           label: "Attendance habit",
           detail: `${demoStudent.attendance.toFixed(1)}% attendance with a ${demoStudent.attendanceStreak} day streak.`,
           complete: demoStudent.attendance >= 92,
+          readinessKey: "attendance",
         },
       ];
 
   const portfolio = demoStudent.portfolioPreview;
+  const interventionLabel = normalizeStatus(demoStudent.interventionStatus);
+  const portfolioEvidenceCount = portfolio
+    ? portfolio.goals.length +
+      portfolio.workSamples.length +
+      portfolio.credentials.length +
+      portfolio.reflections.length +
+      portfolio.futurePlans.length
+    : 0;
+  const readinessDetails: Record<ReadinessKey, ReadinessDetail> = {
+    attendance: {
+      label: "Attendance",
+      currentValue: `${demoStudent.attendance.toFixed(1)}% attendance - ${demoStudent.daysAbsent} days absent`,
+      explanation: "Attendance affects credit progress, intervention triggers, and graduation readiness.",
+      whyItMatters: "High school courses move quickly. Missing class can create credit gaps, extra recovery work, and more counselor follow-up.",
+      nextAction: demoStudent.attendance >= 92
+        ? "Keep the attendance streak going and protect the classes connected to required credits."
+        : "Set a weekly attendance plan with your advisor and identify the class most at risk from absences.",
+    },
+    credits: {
+      label: "Credits",
+      currentValue: `${creditsEarned} earned / ${creditsExpected || "TBD"} expected / ${creditsNeeded} needed`,
+      explanation: "Credits show whether you are earning enough course progress for your grade level.",
+      whyItMatters: isSenior
+        ? "Senior credit checks confirm whether graduation requirements are truly complete before final deadlines."
+        : "Freshman credit pace is one of the clearest signals for whether a student is staying on track for graduation.",
+      nextAction: creditsNeeded > 0
+        ? isSenior
+          ? "Confirm which credits still need documentation and upload any missing completion evidence."
+          : "Attend the next credit lab and finish the highest-impact missing assignment first."
+        : "Keep current courses passing and confirm the credit record with your counselor.",
+    },
+    onTrack: {
+      label: isSenior ? "Readiness status" : "9th Grade On Track",
+      currentValue: isSenior ? readinessLabel : onTrackLabel(demoStudent.ninthGradeOnTrack),
+      explanation: isSenior
+        ? "Readiness status summarizes whether credits, evidence, and next-step benchmarks are complete."
+        : "Freshman year credit progress is one of the strongest signals for staying on pace to graduate.",
+      whyItMatters: isSenior
+        ? "A senior can be on pace for graduation while still needing benchmark or credential evidence before the final review."
+        : "When 9th-grade credits fall behind, recovery work can stack up quickly and affect sophomore course choices.",
+      nextAction: isSenior ? nextReadinessStep : "Use the recovery checklist, attend credit lab, and confirm the next missing assignment with the success team.",
+    },
+    testing: {
+      label: "Academic and testing",
+      currentValue: `Reading ${demoStudent.newaReading} - Math ${demoStudent.newaMath} - Growth ${demoStudent.growthPercentile ?? "N/A"}`,
+      explanation: "Testing signals show where academic skills are strong and where support may still be needed.",
+      whyItMatters: "Benchmarks, growth, and course performance help staff decide whether a student needs support, enrichment, or evidence for readiness.",
+      nextAction: "Choose one tested skill to practice this week and connect it to the weekly goal.",
+    },
+    graduationPlan: {
+      label: "Graduation plan",
+      currentValue: graduationPlanLabel(demoStudent.graduationPlanComplete),
+      explanation: "Your graduation plan connects required credits, career goals, and postsecondary options.",
+      whyItMatters: isSenior
+        ? "The plan helps confirm that final credits, evidence, and next steps are ready before graduation."
+        : "The plan keeps freshman recovery work connected to future course choices instead of feeling like isolated assignments.",
+      nextAction: demoStudent.graduationPlanComplete
+        ? "Review the plan with your counselor and confirm any evidence still marked pending."
+        : "Schedule a counselor check-in to update the plan and connect recovery work to next semester courses.",
+    },
+    portfolio: {
+      label: "Portfolio",
+      currentValue: portfolio ? `${portfolioEvidenceCount} items visible` : "Portfolio not started",
+      explanation: "Your portfolio helps collect evidence for readiness, credentials, and next steps after high school.",
+      whyItMatters: isSenior
+        ? "Credential and benchmark evidence can be the difference between being on pace for credits and being fully ready for graduation review."
+        : "Early portfolio evidence helps connect classwork, recovery plans, and pathway interests before upper grades.",
+      nextAction: isSenior
+        ? "Upload the missing credential or benchmark artifact and add a short reflection explaining what it proves."
+        : "Add the current recovery checklist or pathway goal as a portfolio artifact.",
+    },
+    nextStep: {
+      label: "Next readiness step",
+      currentValue: nextReadinessStep,
+      explanation: "The next readiness step turns the dashboard story into one concrete action.",
+      whyItMatters: "A clear next step keeps credits, portfolio work, attendance, and counselor support moving in the same direction.",
+      nextAction: nextReadinessStep,
+    },
+  };
+  const activeReadiness = readinessDetails[selectedReadiness];
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.16),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_36%)] bg-slate-50">
@@ -364,6 +589,9 @@ export default function HighSchoolStudentDashboard({
               value={isSenior ? "Evidence check" : "Credit recovery"}
               note={demoStudent.encouragementMessage}
               tone={isSenior ? "indigo" : "amber"}
+              readinessKey={isSenior ? "portfolio" : "onTrack"}
+              selected={selectedReadiness === (isSenior ? "portfolio" : "onTrack")}
+              onSelect={setSelectedReadiness}
             />
             <MetricCard
               icon={<Star className="h-5 w-5 fill-amber-400 text-amber-400" />}
@@ -382,6 +610,9 @@ export default function HighSchoolStudentDashboard({
             value={`${demoStudent.attendance.toFixed(1)}%`}
             note={`${demoStudent.daysAbsent} days absent with a ${demoStudent.attendanceStreak} day streak.`}
             tone={attendanceTone}
+            readinessKey="attendance"
+            selected={selectedReadiness === "attendance"}
+            onSelect={setSelectedReadiness}
           />
           <MetricCard
             icon={<BookOpenCheck className="h-5 w-5" />}
@@ -389,6 +620,9 @@ export default function HighSchoolStudentDashboard({
             value={`${creditsEarned}/${creditsExpected || "TBD"}`}
             note={`${creditsNeeded} credits need recovery or confirmation. High school credits recorded: ${demoStudent.highSchoolCredits ?? "TBD"}.`}
             tone={creditTone}
+            readinessKey="credits"
+            selected={selectedReadiness === "credits"}
+            onSelect={setSelectedReadiness}
           />
           <MetricCard
             icon={<Route className="h-5 w-5" />}
@@ -396,8 +630,13 @@ export default function HighSchoolStudentDashboard({
             value={isSenior ? graduationPlanLabel(demoStudent.graduationPlanComplete) : onTrackLabel(demoStudent.ninthGradeOnTrack)}
             note={isSenior ? "Senior readiness depends on final plan, evidence, and credits." : "Freshman on-track status combines credits, attendance, and core course progress."}
             tone={isSenior ? (demoStudent.graduationPlanComplete ? "emerald" : "amber") : onTrackTone}
+            readinessKey={isSenior ? "graduationPlan" : "onTrack"}
+            selected={selectedReadiness === (isSenior ? "graduationPlan" : "onTrack")}
+            onSelect={setSelectedReadiness}
           />
         </section>
+
+        <DetailPanel detail={activeReadiness} />
 
         <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -426,7 +665,14 @@ export default function HighSchoolStudentDashboard({
         </section>
 
         <section className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <button
+            type="button"
+            aria-pressed={selectedReadiness === "credits"}
+            onClick={() => setSelectedReadiness("credits")}
+            className={`rounded-3xl bg-white/85 p-6 text-left shadow-sm ring-1 ring-black/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
+              selectedReadiness === "credits" ? "ring-2 ring-indigo-300 shadow-md" : ""
+            }`}
+          >
             <div className="flex items-center gap-2 text-sm font-semibold text-sky-700">
               <BarChart3 className="h-4 w-4" />
               Credits progress
@@ -451,7 +697,7 @@ export default function HighSchoolStudentDashboard({
                 <div className="mt-1 text-xl font-semibold text-slate-900">{creditsNeeded}</div>
               </div>
             </div>
-          </div>
+          </button>
 
           <div className="rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
@@ -461,16 +707,41 @@ export default function HighSchoolStudentDashboard({
             <h2 className="mt-2 text-2xl font-semibold text-slate-900">
               {isSenior ? "Final readiness evidence" : "9th-grade recovery plan"}
             </h2>
+            <div className={`mt-5 rounded-3xl p-5 ring-1 ${isSenior ? "bg-indigo-50/80 ring-indigo-200/70" : "bg-amber-50/80 ring-amber-200/70"}`}>
+              <div className={`text-sm font-semibold ${isSenior ? "text-indigo-700" : "text-amber-700"}`}>
+                {isSenior ? "Final readiness checklist" : "Get back on track action plan"}
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 text-sm font-semibold leading-6 text-slate-800 md:grid-cols-3">
+                <div>{isSenior ? "Confirm final credit status." : "Attend the next credit lab."}</div>
+                <div>{isSenior ? "Upload missing evidence." : "Submit the highest-impact missing work."}</div>
+                <div>{nextReadinessStep}</div>
+              </div>
+            </div>
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
               {checklistItems.map((item) => (
-                <ChecklistItem key={item.label} label={item.label} detail={item.detail} complete={item.complete} />
+                <ChecklistItem
+                  key={item.label}
+                  label={item.label}
+                  detail={item.detail}
+                  complete={item.complete}
+                  readinessKey={item.readinessKey}
+                  selected={selectedReadiness === item.readinessKey}
+                  onSelect={setSelectedReadiness}
+                />
               ))}
             </div>
           </div>
         </section>
 
         <section className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <button
+            type="button"
+            aria-pressed={selectedReadiness === "graduationPlan" || selectedReadiness === "nextStep"}
+            onClick={() => setSelectedReadiness(isSenior ? "graduationPlan" : "nextStep")}
+            className={`rounded-3xl bg-white/85 p-6 text-left shadow-sm ring-1 ring-black/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
+              selectedReadiness === "graduationPlan" || selectedReadiness === "nextStep" ? "ring-2 ring-indigo-300 shadow-md" : ""
+            }`}
+          >
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
               <GraduationCap className="h-4 w-4" />
               Graduation readiness
@@ -488,7 +759,7 @@ export default function HighSchoolStudentDashboard({
               <div className="text-sm font-semibold text-sky-700">Next readiness step</div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">{nextReadinessStep}</p>
             </div>
-          </div>
+          </button>
 
           <div className="rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
             <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
@@ -500,19 +771,27 @@ export default function HighSchoolStudentDashboard({
               {demoStudent.counselorNote}
             </p>
             <div className="mt-4 rounded-3xl bg-slate-50/90 p-5 ring-1 ring-slate-200/70">
-              <div className="text-sm font-semibold text-slate-500">Current flags</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {demoStudent.flagReasons.length > 0 ? (
-                  demoStudent.flagReasons.map((reason) => (
-                    <span key={reason} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                      {reason}
-                    </span>
-                  ))
-                ) : (
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                    No active flags
-                  </span>
-                )}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-500">Current flags</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {demoStudent.flagReasons.length > 0 ? (
+                      demoStudent.flagReasons.map((reason) => (
+                        <span key={reason} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                          {reason}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                        No active flags
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200/70">
+                  <div className="text-xs font-semibold text-slate-500">Intervention</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{interventionLabel}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -531,6 +810,9 @@ export default function HighSchoolStudentDashboard({
               percent={clampPercent(((demoStudent.newaReading - 180) / 100) * 100)}
               tone="sky"
               note="Reading benchmark"
+              readinessKey="testing"
+              selected={selectedReadiness === "testing"}
+              onSelect={setSelectedReadiness}
             />
             <ProgressMetric
               label="NEWA Math"
@@ -538,6 +820,9 @@ export default function HighSchoolStudentDashboard({
               percent={clampPercent(((demoStudent.newaMath - 180) / 100) * 100)}
               tone="emerald"
               note="Math benchmark"
+              readinessKey="testing"
+              selected={selectedReadiness === "testing"}
+              onSelect={setSelectedReadiness}
             />
             <ProgressMetric
               label="ILEARN average"
@@ -545,6 +830,9 @@ export default function HighSchoolStudentDashboard({
               percent={clampPercent(((demoStudent.iLearn.ela + demoStudent.iLearn.math) / 2 / 500) * 100)}
               tone="amber"
               note={`ELA ${demoStudent.iLearn.ela} - Math ${demoStudent.iLearn.math}`}
+              readinessKey="testing"
+              selected={selectedReadiness === "testing"}
+              onSelect={setSelectedReadiness}
             />
             <ProgressMetric
               label="Growth percentile"
@@ -552,12 +840,22 @@ export default function HighSchoolStudentDashboard({
               percent={demoStudent.growthPercentile ?? 0}
               tone="indigo"
               note="Academic growth"
+              readinessKey="testing"
+              selected={selectedReadiness === "testing"}
+              onSelect={setSelectedReadiness}
             />
           </div>
         </section>
 
         {portfolio ? (
-          <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          <button
+            type="button"
+            aria-pressed={selectedReadiness === "portfolio"}
+            onClick={() => setSelectedReadiness("portfolio")}
+            className={`mt-6 block w-full rounded-3xl bg-white/85 p-6 text-left shadow-sm ring-1 ring-black/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 ${
+              selectedReadiness === "portfolio" ? "ring-2 ring-indigo-300 shadow-md" : ""
+            }`}
+          >
             <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700">
               <Medal className="h-4 w-4" />
               Portfolio preview
@@ -572,7 +870,7 @@ export default function HighSchoolStudentDashboard({
               <PortfolioColumn title="Reflections" items={portfolio.reflections} />
               <PortfolioColumn title="Future plans" items={portfolio.futurePlans} />
             </div>
-          </section>
+          </button>
         ) : null}
       </div>
     </div>
