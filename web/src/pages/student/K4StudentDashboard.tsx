@@ -1,21 +1,17 @@
 import { useState } from "react";
-import { CalendarCheck, CheckCircle2, LogOut, Medal, Sparkles, Star, Target, Trophy, User2 } from "lucide-react";
+import {
+  CalendarCheck,
+  CheckCircle2,
+  LogOut,
+  Medal,
+  Sparkles,
+  Star,
+  Target,
+  Trophy,
+  User2,
+} from "lucide-react";
 import type { NavigateFunction } from "react-router-dom";
 import { DEMO_STUDENTS, type StudentRow } from "../../demo/demoData";
-
-type BubbleKey = "attendance" | "reading" | "math";
-type BubbleTone = "emerald" | "sky" | "amber";
-
-type BubbleDetail = {
-  key: BubbleKey;
-  label: string;
-  value: string;
-  percent: number;
-  tone: BubbleTone;
-  explanation: string;
-  encouragement: string;
-  nextStep: string;
-};
 
 type K4CurrentUser = {
   email: string;
@@ -32,92 +28,125 @@ type K4StudentDashboardProps = {
   demoStudentName: string;
 };
 
-function clampPercent(value: number) {
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
+type BubbleKey = "attendance" | "reading" | "math";
+type MoodKey = "happy" | "ready" | "tired" | "help";
+type QuestKey = "showUp" | "reading" | "math";
+type BuddyKey = "wiseOwl" | "rocketReader" | "mathDragon" | "starExplorer";
 
-function scoreToBubblePercent(score: number) {
-  return clampPercent(((score - 150) / 90) * 100);
-}
+type BubbleTone = "emerald" | "sky" | "amber";
 
-function statusLabel(status: StudentRow["weeklyGoalStatus"]) {
-  if (status === "complete") return "Goal complete";
-  if (status === "in_progress") return "In progress";
-  return "Ready to start";
-}
-
-function statusClass(status: StudentRow["weeklyGoalStatus"]) {
-  if (status === "complete") return "bg-emerald-100 text-emerald-800 ring-emerald-200";
-  if (status === "in_progress") return "bg-sky-50 text-sky-700 ring-sky-200";
-  return "bg-amber-50 text-amber-800 ring-amber-200";
-}
-
-function BubbleProgress({
-  id,
-  label,
-  value,
-  percent,
-  tone,
-  selected,
-  onSelect,
-}: {
-  id: BubbleKey;
+type BubbleDetail = {
+  key: BubbleKey;
   label: string;
   value: string;
   percent: number;
   tone: BubbleTone;
+  explanation: string;
+  encouragement: string;
+  nextStep: string;
+};
+
+type QuestDetail = {
+  key: QuestKey;
+  title: string;
+  status: string;
+  value: string;
+  action: string;
+  explanation: string;
+  whyItMatters: string;
+  nextAction: string;
+  encouragement: string;
+  tone: string;
+};
+
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function scoreToBubblePercent(score: number | null) {
+  if (score === null) {
+    return 0;
+  }
+
+  return clampPercent((score / 250) * 100);
+}
+
+function statusLabel(status: StudentRow["weeklyGoalStatus"]) {
+  if (status === "complete") {
+    return "Quest complete";
+  }
+
+  if (status === "in_progress") {
+    return "Quest in progress";
+  }
+
+  return "Ready to start";
+}
+
+function statusClassName(status: StudentRow["weeklyGoalStatus"]) {
+  if (status === "complete") {
+    return "bg-emerald-100 text-emerald-800 ring-emerald-200";
+  }
+
+  if (status === "in_progress") {
+    return "bg-amber-100 text-amber-800 ring-amber-200";
+  }
+
+  return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
+function BubbleProgress({
+  detail,
+  selected,
+  onSelect,
+}: {
+  detail: BubbleDetail;
   selected: boolean;
-  onSelect: (id: BubbleKey) => void;
+  onSelect: () => void;
 }) {
-  const tones = {
+  const toneClasses = {
     emerald: {
-      wrap: "bg-emerald-50 ring-emerald-200/70",
-      selected: "ring-emerald-400 shadow-md shadow-emerald-100",
-      bubble: "bg-emerald-400/80",
+      ring: selected ? "ring-4 ring-emerald-300 shadow-lg shadow-emerald-100" : "ring-emerald-100",
+      fill: "bg-emerald-400",
       text: "text-emerald-700",
+      bg: selected ? "bg-emerald-50" : "bg-white/85",
     },
     sky: {
-      wrap: "bg-sky-50 ring-sky-200/70",
-      selected: "ring-sky-400 shadow-md shadow-sky-100",
-      bubble: "bg-sky-400/80",
+      ring: selected ? "ring-4 ring-sky-300 shadow-lg shadow-sky-100" : "ring-sky-100",
+      fill: "bg-sky-400",
       text: "text-sky-700",
+      bg: selected ? "bg-sky-50" : "bg-white/85",
     },
     amber: {
-      wrap: "bg-amber-50 ring-amber-200/70",
-      selected: "ring-amber-400 shadow-md shadow-amber-100",
-      bubble: "bg-amber-400/80",
+      ring: selected ? "ring-4 ring-amber-300 shadow-lg shadow-amber-100" : "ring-amber-100",
+      fill: "bg-amber-400",
       text: "text-amber-700",
+      bg: selected ? "bg-amber-50" : "bg-white/85",
     },
-  }[tone];
-
-  const size = 58 + clampPercent(percent) * 0.52;
+  }[detail.tone];
 
   return (
     <button
       type="button"
+      onClick={onSelect}
+      className={`rounded-3xl ${toneClasses.bg} p-5 text-left shadow-sm ring-1 ${toneClasses.ring} transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-200`}
       aria-pressed={selected}
-      onClick={() => onSelect(id)}
-      className={`relative overflow-hidden rounded-3xl p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${tones.wrap} ${
-        selected ? tones.selected : ""
-      }`}
     >
-      <div className="relative z-10">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-700">{label}</div>
-          {selected ? (
-            <span className="rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-black/5">
-              Selected
-            </span>
-          ) : null}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{detail.label}</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{detail.value}</p>
         </div>
-        <div className={`mt-2 text-3xl font-semibold ${tones.text}`}>{value}</div>
-        <div className="mt-1 text-xs font-medium text-slate-500">Tap to explore</div>
+        <div className={`rounded-full px-3 py-1 text-xs font-bold ${toneClasses.text} bg-white/80 ring-1 ring-black/5`}>
+          {selected ? "Popped!" : "Tap to pop"}
+        </div>
       </div>
-      <div
-        className={`absolute -bottom-8 -right-6 rounded-full opacity-70 ${tones.bubble}`}
-        style={{ height: `${size}px`, width: `${size}px` }}
-      />
-      <div className="absolute right-7 top-7 h-5 w-5 rounded-full bg-white/70" />
+
+      <div className="mt-5 h-4 overflow-hidden rounded-full bg-slate-100 ring-1 ring-black/5">
+        <div className={`h-full rounded-full ${toneClasses.fill}`} style={{ width: `${detail.percent}%` }} />
+      </div>
+
+      <p className="mt-3 text-sm font-semibold text-slate-700">{detail.encouragement}</p>
     </button>
   );
 }
@@ -131,294 +160,628 @@ export default function K4StudentDashboard({
   demoStudentName,
 }: K4StudentDashboardProps) {
   const [selectedBubble, setSelectedBubble] = useState<BubbleKey>("attendance");
+  const [selectedMood, setSelectedMood] = useState<MoodKey>("ready");
+  const [selectedQuest, setSelectedQuest] = useState<QuestKey>("showUp");
+  const [selectedBuddy, setSelectedBuddy] = useState<BuddyKey>("wiseOwl");
+  const [treasureChestOpened, setTreasureChestOpened] = useState(false);
+  const [bubbleFeedback, setBubbleFeedback] = useState("Pop a bubble to check your power.");
 
   const firstName = demoStudent.name.split(" ")[0];
-  const attendancePercent = clampPercent(demoStudent.attendance);
-  const readingPercent = scoreToBubblePercent(demoStudent.newaReading);
-  const mathPercent = scoreToBubblePercent(demoStudent.newaMath);
   const goalComplete = demoStudent.weeklyGoalStatus === "complete";
-
-  const missions = [
-    demoStudent.studentWeeklyGoal,
-    demoStudent.teacherWeeklyGoal,
-    demoStudent.attendanceStreak >= 5
-      ? "Keep your attendance streak going today."
-      : "Start the day strong and add to your attendance streak.",
-  ];
+  const starTarget = 5;
+  const starsTowardNextBadge =
+    demoStudent.starsEarnedThisWeek % starTarget || (demoStudent.starsEarnedThisWeek > 0 ? starTarget : 0);
+  const earnedCurrentBadge = demoStudent.rewardBadge ?? "First Badge";
+  const treasureReady = demoStudent.starsEarnedThisWeek >= starTarget;
+  const starsNeededForChest = Math.max(0, starTarget - demoStudent.starsEarnedThisWeek);
+  const nextBadgeName = demoStudent.rewardBadge ? `${demoStudent.rewardBadge} upgrade` : "First Badge";
 
   const bubbleDetails: Record<BubbleKey, BubbleDetail> = {
     attendance: {
       key: "attendance",
       label: "Attendance",
-      value: `${demoStudent.attendance.toFixed(1)}%`,
-      percent: attendancePercent,
+      value: `${clampPercent(demoStudent.attendance)}%`,
+      percent: clampPercent(demoStudent.attendance),
       tone: "emerald",
       explanation: "You are building a strong school streak. Keep showing up each day.",
-      encouragement: `${demoStudent.attendanceStreak} days in a row is something to be proud of.`,
-      nextStep: "Be ready for tomorrow morning and keep your streak alive.",
+      encouragement: `${demoStudent.attendanceStreak} day streak`,
+      nextStep: "Try to add one more school day to your streak.",
     },
     reading: {
       key: "reading",
       label: "Reading",
-      value: String(demoStudent.newaReading),
-      percent: readingPercent,
+      value: demoStudent.newaReading === null ? "Ready" : `${demoStudent.newaReading}`,
+      percent: scoreToBubblePercent(demoStudent.newaReading),
       tone: "sky",
       explanation: "Reading practice helps unlock new levels.",
-      encouragement: "Every page and every new word helps your brain grow stronger.",
-      nextStep: "Read for 15 minutes and tell someone one thing you learned.",
+      encouragement: "Read a little each day",
+      nextStep: "Choose one just-right book or passage and read for a few minutes.",
     },
     math: {
       key: "math",
       label: "Math",
-      value: String(demoStudent.newaMath),
-      percent: mathPercent,
+      value: demoStudent.newaMath === null ? "Ready" : `${demoStudent.newaMath}`,
+      percent: scoreToBubblePercent(demoStudent.newaMath),
       tone: "amber",
       explanation: "Math growth happens one skill at a time.",
-      encouragement: "Mistakes are part of learning a new strategy.",
-      nextStep: "Try one practice problem and explain how you solved it.",
+      encouragement: "Keep solving",
+      nextStep: "Practice one problem, check your thinking, and try one more.",
     },
   };
 
   const selectedDetail = bubbleDetails[selectedBubble];
-  const rewardMessage = goalComplete
-    ? "Big celebration: your weekly goal is complete. You earned a proud moment."
-    : "Keep going: each star, streak day, and practice step moves you closer to your weekly goal.";
+
+  const moodOptions: Array<{
+    key: MoodKey;
+    label: string;
+    icon: string;
+    message: string;
+    className: string;
+  }> = [
+    {
+      key: "happy",
+      label: "Happy",
+      icon: "😊",
+      message: `Love that energy, ${firstName}. Let it help you shine today.`,
+      className: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+    },
+    {
+      key: "ready",
+      label: "Ready",
+      icon: "🚀",
+      message: "You are ready for today's quest. Start with one small win.",
+      className: "bg-sky-50 text-sky-800 ring-sky-200",
+    },
+    {
+      key: "tired",
+      label: "Tired",
+      icon: "🌙",
+      message: "Thanks for checking in. Take it one step at a time today.",
+      className: "bg-violet-50 text-violet-800 ring-violet-200",
+    },
+    {
+      key: "help",
+      label: "Need help",
+      icon: "💬",
+      message: "Good choice speaking up. A grown-up can help you with the next step.",
+      className: "bg-amber-50 text-amber-800 ring-amber-200",
+    },
+  ];
+
+  const selectedMoodOption = moodOptions.find((mood) => mood.key === selectedMood) ?? moodOptions[1];
+
+  const buddies: Array<{
+    key: BuddyKey;
+    name: string;
+    icon: string;
+    power: string;
+    message: string;
+    className: string;
+  }> = [
+    {
+      key: "wiseOwl",
+      name: "Wise Owl",
+      icon: "🦉",
+      power: "Careful thinking",
+      message: "Wise Owl says: slow down, look closely, and trust your brain.",
+      className: "bg-violet-50 text-violet-800 ring-violet-200",
+    },
+    {
+      key: "rocketReader",
+      name: "Rocket Reader",
+      icon: "🚀",
+      power: "Reading lift-off",
+      message: "Rocket Reader says: every page can launch a new idea.",
+      className: "bg-sky-50 text-sky-800 ring-sky-200",
+    },
+    {
+      key: "mathDragon",
+      name: "Math Dragon",
+      icon: "🐉",
+      power: "Problem solving",
+      message: "Math Dragon says: try one strategy, then try another.",
+      className: "bg-amber-50 text-amber-800 ring-amber-200",
+    },
+    {
+      key: "starExplorer",
+      name: "Star Explorer",
+      icon: "⭐",
+      power: "Brave effort",
+      message: "Star Explorer says: one brave try can earn a bright star.",
+      className: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+    },
+  ];
+
+  const selectedBuddyOption = buddies.find((buddy) => buddy.key === selectedBuddy) ?? buddies[0];
+
+  const questDetails: Record<QuestKey, QuestDetail> = {
+    showUp: {
+      key: "showUp",
+      title: "Show Up Quest",
+      status: demoStudent.attendanceStreak > 0 ? "Streak active" : "Ready to begin",
+      value: `${demoStudent.attendanceStreak} day streak`,
+      action: "Come to school and keep your streak growing.",
+      explanation: "Every day you show up, your streak gets stronger.",
+      whyItMatters: "Being at school helps you practice reading, math, and friendship skills.",
+      nextAction: "Pack what you need and be ready for tomorrow morning.",
+      encouragement: `${firstName}, your school streak is a real superpower.`,
+      tone: "emerald",
+    },
+    reading: {
+      key: "reading",
+      title: "Reading Quest",
+      status: "Ready to read",
+      value: demoStudent.newaReading === null ? "Practice time" : `${demoStudent.newaReading}`,
+      action: demoStudent.studentWeeklyGoal,
+      explanation: "Reading practice helps unlock new levels.",
+      whyItMatters: "Reading helps you understand stories, directions, and ideas in every class.",
+      nextAction: "Read one page, retell what happened, and celebrate the win.",
+      encouragement: "Your reading power grows each time you practice.",
+      tone: "sky",
+    },
+    math: {
+      key: "math",
+      title: "Math Quest",
+      status: "Power growing",
+      value: demoStudent.newaMath === null ? "Practice time" : `${demoStudent.newaMath}`,
+      action: demoStudent.teacherWeeklyGoal,
+      explanation: "Math power grows one skill at a time.",
+      whyItMatters: "Math helps you solve puzzles, notice patterns, and explain your thinking.",
+      nextAction: "Try one problem slowly and show your work.",
+      encouragement: "Every math try counts.",
+      tone: "amber",
+    },
+  };
+
+  const selectedQuestDetail = questDetails[selectedQuest];
+  const questTiles = [questDetails.showUp, questDetails.reading, questDetails.math];
+
+  const badgeLocker = [
+    { name: earnedCurrentBadge, status: "Earned", icon: "🏅", active: true },
+    { name: "Reading Champion", status: "Locked", icon: "🔒", active: false },
+    { name: "Math Explorer", status: "Locked", icon: "🔒", active: false },
+    { name: "Attendance Hero", status: "Locked", icon: "🔒", active: false },
+  ];
+
+  const handleBubbleSelect = (bubble: BubbleKey) => {
+    setSelectedBubble(bubble);
+    setBubbleFeedback(
+      bubble === "attendance"
+        ? "Nice pop! You checked your Attendance Bubble."
+        : bubble === "reading"
+          ? "Nice pop! You checked your Reading Bubble."
+          : "Math Bubble unlocked!",
+    );
+  };
+
+  const treasureMessage = treasureReady
+    ? treasureChestOpened
+      ? `Treasure opened: ${earnedCurrentBadge} is shining in your badge locker.`
+      : "Open your treasure chest!"
+    : treasureChestOpened
+      ? `Keep going, ${firstName}. ${starsNeededForChest} more ${
+          starsNeededForChest === 1 ? "star" : "stars"
+        } will unlock your chest.`
+      : `${starsNeededForChest} more ${starsNeededForChest === 1 ? "star" : "stars"} to open the chest.`;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.16),_transparent_36%)] bg-slate-50">
-      <div className="mx-auto max-w-6xl px-5 py-6 sm:px-6 sm:py-8">
-        <div className="flex flex-col gap-4 rounded-3xl bg-white/80 p-4 shadow-sm ring-1 ring-black/5 backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-200/70">
-              <Sparkles className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <div className="text-xl font-semibold text-slate-900">Student Dashboard</div>
-              <div className="text-sm text-slate-500">K-4 mode</div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-sky-50 to-amber-50 text-slate-900">
+      <header className="border-b border-white/70 bg-white/80 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex items-center gap-3 text-left"
+              aria-label="Go to home page"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Student Dashboard</p>
+                <h1 className="text-xl font-black text-slate-900">Daily Progress Adventure</h1>
+              </div>
+            </button>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {currentUser ? (
+                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5">
+                  <User2 className="h-4 w-4 text-emerald-600" />
+                  {currentUser.email}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {currentUser ? (
-              <div className="rounded-2xl bg-slate-50 px-4 py-2 text-xs text-slate-600 ring-1 ring-slate-200/70">
-                <div className="font-semibold text-slate-800">{currentUser.email}</div>
-                <div>Role: {currentUser.role} - District: {currentUser.district_id}</div>
-              </div>
-            ) : null}
-
-            <label className="rounded-2xl bg-white px-4 py-2 text-sm shadow-sm ring-1 ring-black/5">
-              <span className="mr-2 font-medium text-slate-500">Demo</span>
-              <select
-                className="bg-transparent font-semibold text-slate-800 outline-none"
-                value={demoStudentName}
-                onChange={(e) => onChangeStudent(e.target.value)}
-              >
-                {DEMO_STUDENTS.map((student) => (
-                  <option key={student.id} value={student.name}>
-                    {student.name}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-col gap-2 sm:max-w-sm">
+            <label htmlFor="k4-student-select" className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Demo student
             </label>
-
-            <button
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5 hover:bg-slate-50"
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
+            <select
+              id="k4-student-select"
+              value={demoStudentName}
+              onChange={(event) => onChangeStudent(event.target.value)}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm outline-none ring-0 transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
             >
-              <LogOut className="h-4 w-4" />
-              Log out
-            </button>
+              {DEMO_STUDENTS.map((student) => (
+                <option key={student.id} value={student.name}>
+                  {student.name} - Grade {student.grade}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
+      </header>
 
-        <section className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur sm:p-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-700 ring-1 ring-sky-200/70">
-              <User2 className="h-4 w-4" />
-              Grade {demoStudent.grade}
+      <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">Welcome back</p>
+              <h2 className="mt-2 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+                Hi, {firstName}!
+              </h2>
+              <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-600">
+                Pick a power-up, pop a progress bubble, and finish today's quest one small win at a time.
+              </p>
             </div>
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-              Hi {firstName}, ready for today?
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              {demoStudent.encouragementMessage}
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              <div className="rounded-3xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stars</p>
+                <p className="mt-1 text-3xl font-black text-emerald-900">{demoStudent.starsEarnedThisWeek}</p>
+              </div>
+              <div className="rounded-3xl bg-sky-50 p-4 ring-1 ring-sky-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Streak</p>
+                <p className="mt-1 text-3xl font-black text-sky-900">{demoStudent.attendanceStreak}</p>
+              </div>
+              <div className="rounded-3xl bg-amber-50 p-4 ring-1 ring-amber-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Badge</p>
+                <p className="mt-1 text-lg font-black text-amber-900">{earnedCurrentBadge}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Daily Check-In</p>
+                <h2 className="text-xl font-black text-slate-900">How are you feeling?</h2>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {moodOptions.map((mood) => (
+                <button
+                  key={mood.key}
+                  type="button"
+                  onClick={() => setSelectedMood(mood.key)}
+                  className={`rounded-3xl p-4 text-center shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-rose-100 ${
+                    selectedMood === mood.key ? `${mood.className} ring-4` : "bg-white text-slate-700 ring-black/5"
+                  }`}
+                  aria-pressed={selectedMood === mood.key}
+                >
+                  <div className="text-2xl" aria-hidden="true">
+                    {mood.icon}
+                  </div>
+                  <div className="mt-2 text-sm font-black">{mood.label}</div>
+                </button>
+              ))}
+            </div>
+
+            <p className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold leading-6 ring-1 ${selectedMoodOption.className}`}>
+              {selectedMoodOption.message}
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                <Star className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Star Path</p>
+                <h2 className="text-xl font-black text-slate-900">Reward Progress</h2>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">
+              {starsTowardNextBadge} of {starTarget} stars toward your next badge:{" "}
+              <span className="font-black text-amber-700">{nextBadgeName}</span>.
             </p>
 
-            {goalComplete ? (
-              <div className="mt-6 flex items-start gap-3 rounded-3xl bg-emerald-50 p-4 text-emerald-800 ring-1 ring-emerald-200/80">
-                <Trophy className="mt-0.5 h-5 w-5 shrink-0" />
-                <div>
-                  <div className="font-semibold">Weekly goal complete!</div>
-                  <div className="mt-1 text-sm leading-6">Amazing focus this week. Keep the momentum going.</div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid gap-4">
-            <div className="rounded-3xl bg-emerald-50/80 p-5 shadow-sm ring-1 ring-emerald-200/70">
-              <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/80 ring-1 ring-black/5">
-                  <Star className="h-5 w-5 fill-emerald-500 text-emerald-500" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-emerald-700">Stars this week</div>
-                  <div className="text-4xl font-semibold text-slate-900">{demoStudent.starsEarnedThisWeek}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center gap-3">
-                <CalendarCheck className="h-5 w-5 text-sky-600" />
-                <div>
-                  <div className="text-sm font-semibold text-slate-600">Attendance streak</div>
-                  <div className="text-2xl font-semibold text-slate-900">{demoStudent.attendanceStreak} days</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center gap-3">
-                <Medal className="h-5 w-5 text-amber-600" />
-                <div>
-                  <div className="text-sm font-semibold text-slate-600">Reward badge</div>
-                  <div className="text-xl font-semibold text-slate-900">{demoStudent.rewardBadge ?? "Keep going"}</div>
-                </div>
-              </div>
+            <div className="mt-4 flex gap-2">
+              {Array.from({ length: starTarget }, (_, index) => {
+                const filled = index < starsTowardNextBadge;
+                return (
+                  <div
+                    key={index}
+                    className={`flex h-11 w-11 items-center justify-center rounded-full ring-1 ${
+                      filled ? "bg-amber-300 text-amber-900 ring-amber-200" : "bg-slate-100 text-slate-300 ring-slate-200"
+                    }`}
+                  >
+                    <Star className="h-5 w-5 fill-current" />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <section className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Choose Your Buddy</p>
+                <h2 className="text-xl font-black text-slate-900">Pick a power-up</h2>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {buddies.map((buddy) => (
+                <button
+                  key={buddy.key}
+                  type="button"
+                  onClick={() => setSelectedBuddy(buddy.key)}
+                  className={`rounded-3xl p-4 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-100 ${
+                    selectedBuddy === buddy.key ? `${buddy.className} ring-4` : "bg-white text-slate-700 ring-black/5"
+                  }`}
+                  aria-pressed={selectedBuddy === buddy.key}
+                >
+                  <div className="text-3xl" aria-hidden="true">
+                    {buddy.icon}
+                  </div>
+                  <p className="mt-3 text-sm font-black">{buddy.name}</p>
+                  <p className="mt-1 text-xs font-semibold opacity-80">{buddy.power}</p>
+                </button>
+              ))}
+            </div>
+
+            <p className={`mt-4 rounded-2xl px-4 py-3 text-sm font-semibold leading-6 ring-1 ${selectedBuddyOption.className}`}>
+              {selectedBuddyOption.message}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setTreasureChestOpened(true)}
+            className="rounded-3xl bg-white/85 p-5 text-left shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-amber-100"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl text-amber-800">
+                🧰
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Treasure Chest</p>
+                <h2 className="text-xl font-black text-slate-900">{treasureReady ? "Ready to open" : "Still charging"}</h2>
+              </div>
+            </div>
+            <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">{treasureMessage}</p>
+            <div className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800 ring-1 ring-amber-100">
+              {demoStudent.starsEarnedThisWeek} stars collected this week
+            </div>
+          </button>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Weekly Goal Quest</p>
+                <h2 className="mt-1 text-2xl font-black text-slate-900">This week's goal</h2>
+              </div>
+              <span
+                className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-black ring-1 ${statusClassName(
+                  demoStudent.weeklyGoalStatus,
+                )}`}
+              >
+                {statusLabel(demoStudent.weeklyGoalStatus)}
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Teacher goal</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">{demoStudent.teacherWeeklyGoal}</p>
+              </div>
+              <div className="rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">My goal</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">{demoStudent.studentWeeklyGoal}</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`rounded-3xl p-5 shadow-sm ring-1 ${
+              goalComplete
+                ? "bg-emerald-500 text-white ring-emerald-300"
+                : "bg-white/85 text-slate-900 ring-black/5"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                  goalComplete ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div>
+                <p className={`text-xs font-bold uppercase tracking-wide ${goalComplete ? "text-emerald-50" : "text-amber-700"}`}>
+                  Celebration Station
+                </p>
+                <h2 className="text-xl font-black">{goalComplete ? "You finished the quest!" : "Keep going, you are close"}</h2>
+              </div>
+            </div>
+
+            <p className={`mt-4 text-sm font-semibold leading-6 ${goalComplete ? "text-emerald-50" : "text-slate-700"}`}>
+              {goalComplete
+                ? `${firstName}, you earned ${demoStudent.starsEarnedThisWeek} stars this week. ${demoStudent.encouragementMessage}`
+                : `${demoStudent.encouragementMessage} You already have ${demoStudent.starsEarnedThisWeek} stars this week.`}
+            </p>
+          </div>
+        </section>
+
+        <section className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Weekly goal</h2>
-              <p className="mt-1 text-sm text-slate-500">A teacher goal and a student goal for the week.</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Progress Bubbles</p>
+              <h2 className="text-2xl font-black text-slate-900">Pop a bubble to check your power</h2>
             </div>
-            <span className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusClass(demoStudent.weeklyGoalStatus)}`}>
-              {statusLabel(demoStudent.weeklyGoalStatus)}
-            </span>
+            <p className="rounded-full bg-sky-50 px-4 py-2 text-sm font-bold text-sky-800 ring-1 ring-sky-100">
+              {bubbleFeedback}
+            </p>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-3xl bg-slate-50/90 p-5 ring-1 ring-slate-200/70">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
-                <Target className="h-4 w-4" />
-                Teacher goal
-              </div>
-              <p className="mt-3 text-lg font-semibold leading-8 text-slate-900">{demoStudent.teacherWeeklyGoal}</p>
-            </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {(Object.keys(bubbleDetails) as BubbleKey[]).map((bubble) => (
+              <BubbleProgress
+                key={bubble}
+                detail={bubbleDetails[bubble]}
+                selected={selectedBubble === bubble}
+                onSelect={() => handleBubbleSelect(bubble)}
+              />
+            ))}
+          </div>
 
-            <div className="rounded-3xl bg-emerald-50/80 p-5 ring-1 ring-emerald-200/70">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                <CheckCircle2 className="h-4 w-4" />
-                My goal
+          <div className="mt-5 rounded-3xl bg-slate-900 p-5 text-white shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-emerald-200">Bubble popped</p>
+            <h3 className="mt-1 text-2xl font-black">{selectedDetail.label} power</h3>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-200">{selectedDetail.explanation}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Current value</p>
+                <p className="mt-1 text-xl font-black">{selectedDetail.value}</p>
               </div>
-              <p className="mt-3 text-lg font-semibold leading-8 text-slate-900">{demoStudent.studentWeeklyGoal}</p>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Encouragement</p>
+                <p className="mt-1 text-sm font-semibold leading-6">{selectedDetail.encouragement}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Next step</p>
+                <p className="mt-1 text-sm font-semibold leading-6">{selectedDetail.nextStep}</p>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <BubbleProgress
-            id="attendance"
-            label="Attendance"
-            value={bubbleDetails.attendance.value}
-            percent={bubbleDetails.attendance.percent}
-            tone={bubbleDetails.attendance.tone}
-            selected={selectedBubble === "attendance"}
-            onSelect={setSelectedBubble}
-          />
-          <BubbleProgress
-            id="reading"
-            label="Reading"
-            value={bubbleDetails.reading.value}
-            percent={bubbleDetails.reading.percent}
-            tone={bubbleDetails.reading.tone}
-            selected={selectedBubble === "reading"}
-            onSelect={setSelectedBubble}
-          />
-          <BubbleProgress
-            id="math"
-            label="Math"
-            value={bubbleDetails.math.value}
-            percent={bubbleDetails.math.percent}
-            tone={bubbleDetails.math.tone}
-            selected={selectedBubble === "math"}
-            onSelect={setSelectedBubble}
-          />
-        </section>
-
-        <section className="mt-4 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <section className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
             <div>
-              <div className="text-sm font-semibold text-slate-500">Selected area</div>
-              <h2 className="mt-1 text-2xl font-semibold text-slate-900">{selectedDetail.label}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{selectedDetail.explanation}</p>
-            </div>
-            <div className="rounded-3xl bg-slate-50 px-5 py-4 text-center ring-1 ring-slate-200/70">
-              <div className="text-xs font-semibold text-slate-500">Current value</div>
-              <div className="mt-1 text-3xl font-semibold text-slate-900">{selectedDetail.value}</div>
+              <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Daily Quest Board</p>
+              <h2 className="text-2xl font-black text-slate-900">Choose your next quest</h2>
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="rounded-3xl bg-emerald-50/80 p-4 ring-1 ring-emerald-200/70">
-              <div className="text-xs font-semibold text-emerald-700">Encouragement</div>
-              <div className="mt-2 text-sm font-semibold leading-6 text-slate-800">{selectedDetail.encouragement}</div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            {questTiles.map((quest) => {
+              const selected = selectedQuest === quest.key;
+              const Icon = quest.key === "showUp" ? CalendarCheck : quest.key === "reading" ? Sparkles : Target;
+
+              return (
+                <button
+                  key={quest.key}
+                  type="button"
+                  onClick={() => setSelectedQuest(quest.key)}
+                  className={`rounded-3xl p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+                    selected ? "bg-emerald-50 ring-4 ring-emerald-200" : "bg-white ring-black/5"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-emerald-700 ring-1 ring-black/5">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900">{quest.title}</h3>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{quest.status}</p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-2xl font-black text-slate-900">{quest.value}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{quest.action}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 rounded-3xl bg-slate-900 p-5 text-white">
+            <p className="text-xs font-bold uppercase tracking-wide text-emerald-200">Quest details</p>
+            <h3 className="mt-1 text-2xl font-black">{selectedQuestDetail.title}</h3>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-200">{selectedQuestDetail.explanation}</p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Current status</p>
+                <p className="mt-1 text-sm font-semibold leading-6">{selectedQuestDetail.value}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Why it matters</p>
+                <p className="mt-1 text-sm font-semibold leading-6">{selectedQuestDetail.whyItMatters}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-300">Next action</p>
+                <p className="mt-1 text-sm font-semibold leading-6">{selectedQuestDetail.nextAction}</p>
+              </div>
             </div>
-            <div className="rounded-3xl bg-sky-50/80 p-4 ring-1 ring-sky-200/70">
-              <div className="text-xs font-semibold text-sky-700">Next step</div>
-              <div className="mt-2 text-sm font-semibold leading-6 text-slate-800">{selectedDetail.nextStep}</div>
-            </div>
+
+            <p className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-emerald-100">
+              {selectedQuestDetail.encouragement}
+            </p>
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <section className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+              <Medal className="h-5 w-5" />
+            </div>
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 ring-1 ring-amber-200/70">
-                <Trophy className="h-4 w-4" />
-                Reward check
-              </div>
-              <h2 className="mt-4 text-2xl font-semibold text-slate-900">
-                {goalComplete ? "Celebrate your goal win!" : "Keep collecting progress"}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{rewardMessage}</p>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{demoStudent.encouragementMessage}</p>
-            </div>
-
-            <div className="grid min-w-64 gap-3">
-              <div className="rounded-3xl bg-emerald-50/80 p-4 ring-1 ring-emerald-200/70">
-                <div className="text-xs font-semibold text-emerald-700">Stars earned</div>
-                <div className="mt-1 text-3xl font-semibold text-slate-900">{demoStudent.starsEarnedThisWeek}</div>
-              </div>
-              <div className="rounded-3xl bg-slate-50/90 p-4 ring-1 ring-slate-200/70">
-                <div className="text-xs font-semibold text-slate-500">Badge</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{demoStudent.rewardBadge ?? "Keep going"}</div>
-              </div>
+              <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Badge Locker</p>
+              <h2 className="text-2xl font-black text-slate-900">Badges you can collect</h2>
             </div>
           </div>
-        </section>
 
-        <section className="mt-6 rounded-3xl bg-white/85 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur">
-          <h2 className="text-2xl font-semibold text-slate-900">Today's Mission</h2>
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-            {missions.map((mission, index) => (
-              <div key={`${mission}-${index}`} className="rounded-3xl bg-slate-50/90 p-4 ring-1 ring-slate-200/70">
-                <div className="mb-3 grid h-9 w-9 place-items-center rounded-2xl bg-white text-sm font-semibold text-slate-700 ring-1 ring-black/5">
-                  {index + 1}
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {badgeLocker.map((badge) => (
+              <div
+                key={badge.name}
+                className={`rounded-3xl p-5 text-center shadow-sm ring-1 ${
+                  badge.active
+                    ? "bg-emerald-50 text-emerald-900 ring-emerald-100"
+                    : "bg-slate-50 text-slate-500 ring-slate-200"
+                }`}
+              >
+                <div className="text-3xl" aria-hidden="true">
+                  {badge.icon}
                 </div>
-                <div className="text-sm font-semibold leading-6 text-slate-800">{mission}</div>
+                <p className="mt-3 text-sm font-black">{badge.name}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-wide">{badge.status}</p>
               </div>
             ))}
           </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 }
